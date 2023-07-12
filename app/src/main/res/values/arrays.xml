@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="towns">
+        <item>Pampanga</item>
+    </string-array>
+    <string-array name="municipalities">
+        <item>Lubao</item>
+    </string-array>
+    <string-array name="barangays">
+        <item>Balantacan</item>
+    </string-array>
+    <string-array name="am_pm_array">
+            <item>AM</item>
+            <item>PM</item>
+    </string-array>
+</resources>
