@@ -3,4 +3,9 @@
     <style name="SearchEditTextStyle" parent="Widget.AppCompat.EditText">
         <item name="android:background">@null</item>
     </style>
+
+    <style name="CustomProgressBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:indeterminateDrawable">@drawable/custom_progress</item>
+    </style>
+
 </resources>

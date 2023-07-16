@@ -10,10 +10,12 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -42,7 +44,6 @@ import java.util.List;
 import java.util.Locale;
 
 import android.Manifest;
-import com.system.myapplication.LocationSelectionListener;
 
 public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
     private MapView mapView;
@@ -55,6 +56,8 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
     private LocationSelectionListener locationSelectionListener;
     private double latitude;
     private double longitude;
+    private Geocoder geocoder;
+    private String selectedSuggestion;
 
     public static LocationBottomSheetFragment newInstance(double latitude, double longitude) {
         LocationBottomSheetFragment fragment = new LocationBottomSheetFragment();
@@ -98,72 +101,7 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
         setLocationAutomaticallyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Handle button click event
-                if (userMarker != null) {
-                    // Clear previous markers from the map
-                    mapView.getOverlays().clear();
-
-                    // Get the current location of the user
-                    LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-                    if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                            && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        // Request location permissions if not granted
-                        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION_PERMISSION);
-                        return;
-                    }
-                    // Request location updates
-                    locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
-                        @Override
-                        public void onLocationChanged(Location location) {
-                            // Reverse geocode the current location to get the address
-                            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
-                            try {
-                                List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                                if (addresses != null && addresses.size() > 0) {
-                                    Address address = addresses.get(0);
-
-                                    // Set the locationTextView with the current address
-                                    locationTextView.setText(address.getAddressLine(0));
-                                    Log.d("LocationBottomSheet", "Location automatically set to: " + address.getAddressLine(0));
-
-                                    // Set the map view to the current location
-                                    mapView.getController().setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
-
-                                    // Add a marker at the current location
-                                    userMarker = new Marker(mapView);
-                                    userMarker.setPosition(new GeoPoint(location.getLatitude(), location.getLongitude()));
-
-                                    // Set the new marker's drag listener
-                                    userMarker.setOnMarkerDragListener(new MyMarkerDragListener(geocoder, locationTextView));
-
-                                    mapView.getOverlays().add(userMarker);
-
-                                    // Set the initial state of the button
-                                    isButtonSelected = false;
-                                    updateSetManualLocationButtonState();
-
-                                    // Animate to the current location with zoom
-                                    final double zoomLevel = 18.5; // Set your desired zoom level as a double
-                                    mapView.getController().setZoom(zoomLevel);
-                                }
-                            } catch (IOException e) {
-                                Log.e("LocationError", "Error retrieving current location: " + e.getMessage());
-                            }
-                        }
-
-                        @Override
-                        public void onStatusChanged(String provider, int status, Bundle extras) {
-                        }
-
-                        @Override
-                        public void onProviderEnabled(String provider) {
-                        }
-
-                        @Override
-                        public void onProviderDisabled(String provider) {
-                        }
-                    }, null);
-                }
+             setLocationAutomatically();
             }
         });
 
@@ -182,7 +120,7 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
             @Override
             public void onClick(View v) {
                 // Handle button click event here
-                performSearch();
+                performSearch(selectedSuggestion);
                 Log.d("LocationBottomSheet", "searchButton clicked");
             }
         });
@@ -193,8 +131,26 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
                 String selectedSuggestion = (String) parent.getItemAtPosition(position);
                 searchEditText.setText(selectedSuggestion);
                 Log.d("LocationBottomSheet", "AutoCompleteTextView item clicked: " + selectedSuggestion);
+                // Call the performSearch method here
+                performSearch(selectedSuggestion);
             }
         });
+
+        searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE ||
+                        actionId == EditorInfo.IME_ACTION_SEARCH ||
+                        (event != null && event.getAction() == KeyEvent.ACTION_DOWN &&
+                                event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    String searchQuery = searchEditText.getText().toString();
+                    performSearch(searchQuery);
+                    return true;
+                }
+                return false;
+            }
+        });
+
 
         mapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -218,7 +174,7 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
             latitude = args.getDouble("latitude");
             longitude = args.getDouble("longitude");
             // Reverse geocode the latitude and longitude to get the location address
-            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+            geocoder = new Geocoder(getActivity(), Locale.getDefault());
             try {
                 List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
                 if (addresses != null && addresses.size() > 0) {
@@ -234,7 +190,8 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
             mapView.getController().setCenter(new GeoPoint(latitude, longitude));
             userMarker = new Marker(mapView);
             userMarker.setPosition(new GeoPoint(latitude, longitude));
-            userMarker.setOnMarkerDragListener(new MyMarkerDragListener(geocoder, locationTextView)); // Set the marker drag listener
+            userMarker.setOnMarkerDragListener(new MyMarkerDragListener(geocoder, locationTextView, latitude, longitude, LocationBottomSheetFragment.this, mapView));
+            // Set the marker drag listener
             mapView.getOverlays().add(userMarker);
 
             // Animate to the user's location with zoom
@@ -245,11 +202,103 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
         return view;
     }
 
+    private void setLocationAutomatically() {
+        // Handle button click event
+        if (userMarker != null) {
+            // Clear previous markers from the map
+            mapView.getOverlays().clear();
+
+            // Get the current location of the user
+            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Request location permissions if not granted
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+                return;
+            }
+            // Request location updates
+            locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    // Reverse geocode the current location to get the address
+                    geocoder = new Geocoder(getActivity(), Locale.getDefault());
+                    try {
+                        List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                        if (addresses != null && addresses.size() > 0) {
+                            Address address = addresses.get(0);
+
+                            // Set the locationTextView with the current address
+                            locationTextView.setText(address.getAddressLine(0));
+                            Log.d("LocationBottomSheet", "Location automatically set to: " + address.getAddressLine(0));
+
+                            // Set the map view to the current location
+                            mapView.getController().animateTo(new GeoPoint(location.getLatitude(), location.getLongitude()));
+
+                            // Add a marker at the current location
+                            userMarker = new Marker(mapView);
+                            userMarker.setPosition(new GeoPoint(location.getLatitude(), location.getLongitude()));
+
+                            // Set the new marker's drag listener
+                            userMarker.setOnMarkerDragListener(new MyMarkerDragListener(geocoder, locationTextView, latitude, longitude, LocationBottomSheetFragment.this, mapView));
+
+                            mapView.getOverlays().add(userMarker);
+
+                            // Set the initial state of the button
+                            isButtonSelected = false;
+                            updateSetManualLocationButtonState();
+
+                            // Animate to the current location with zoom
+                            final double zoomLevel = 18.5; // Set your desired zoom level as a double
+                            mapView.getController().setZoom(zoomLevel);
+
+                            latitude = location.getLatitude();
+                            longitude = location.getLongitude();
+                        }
+                    } catch (IOException e) {
+                        Log.e("LocationError", "Error retrieving current location: " + e.getMessage());
+                    }
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+                }
+            }, null);
+        }
+    }
+
+    public void updateLocation(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        // Reverse geocode the latitude and longitude to get the location address
+        geocoder = new Geocoder(getActivity(), Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+            if (addresses != null && addresses.size() > 0) {
+                Address address = addresses.get(0);
+                // Set the location only if it's not already set
+                locationTextView.setText(address.getAddressLine(0));
+            }
+        } catch (IOException e) {
+            Log.e("LocationError", "Error retrieving location: " + e.getMessage());
+        }
+    }
+
     private void performSave() {
+
         // Retrieve the updated latitude and longitude values
         double retrievedLatitude = latitude;
         double retrievedLongitude = longitude;
-
+        // Perform validation to check if the location is within Lubao, Pampanga
+        if (isLocationWithinLubao(retrievedLatitude, retrievedLongitude)) {
+            // Notify the listener with the updated location
         // Notify the listener with the updated location
         if (locationSelectionListener != null) {
             locationSelectionListener.onLocationSelected(retrievedLatitude, retrievedLongitude);
@@ -257,12 +306,28 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
             Log.e("LocationBottomSheetFragment", "Updated Longitudes: " + retrievedLongitude);
             dismiss();
         }
+        } else {
+            // Display an error message indicating that the address is outside Lubao, Pampanga
+            Toast.makeText(requireContext(), "Please select an address within Lubao, Pampanga", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    private void performSearch() {
+    private boolean isLocationWithinLubao(double latitude, double longitude) {
+        // Check if the latitude and longitude fall within the boundaries of Lubao, Pampanga
+        // Replace the condition with the actual latitude and longitude boundaries of Lubao, Pampanga
+        double minLatitude = 13.9243;
+        double maxLatitude = 14.9502;
+        double minLongitude = 120.4595;
+        double maxLongitude = 120.7169;
+
+        return latitude >= minLatitude && latitude <= maxLatitude &&
+                longitude >= minLongitude && longitude <= maxLongitude;
+    }
+
+    private void performSearch(String selectedSuggestion) {
         String searchText = searchEditText.getText().toString().trim();
         if (!searchText.isEmpty()) {
-            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+            geocoder = new Geocoder(getActivity(), Locale.getDefault());
             try {
                 List<Address> addresses = geocoder.getFromLocationName(searchText + ", Pampanga, Philippines", 1);
                 if (addresses != null && addresses.size() > 0) {
@@ -274,14 +339,14 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
                     mapView.getOverlays().clear();
 
                     // Update the map view to the searched location
-                    mapView.getController().setCenter(new GeoPoint(latitude, longitude));
+                    mapView.getController().animateTo(new GeoPoint(latitude, longitude));
 
                     // Add a marker at the searched location
                     userMarker = new Marker(mapView);
                     userMarker.setPosition(new GeoPoint(latitude, longitude));
 
                     // Set the new marker's drag listener
-                    userMarker.setOnMarkerDragListener(new MyMarkerDragListener(geocoder, locationTextView));
+                    userMarker.setOnMarkerDragListener(new MyMarkerDragListener(geocoder, locationTextView, latitude, longitude, LocationBottomSheetFragment.this, mapView));
 
                     mapView.getOverlays().add(userMarker);
 

@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -33,6 +35,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -43,6 +46,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.android.volley.Request;
@@ -54,6 +58,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
@@ -82,10 +87,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import pl.droidsonroids.gif.GifImageView;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+
+
 public class MainActivity extends AppCompatActivity implements LocationSelectionListener {
     private String formattedDate;
     private List<String> barangayOptions = new ArrayList<>();
     private List<String> imageUrls = new ArrayList<>();
+    private HashMap<String, String> barangaysMap;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
     private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
     private LinearLayout imageContainer;
@@ -110,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private ImageView minuteIncreaseButton;
     private ImageView minuteDecreaseButton;
     private ImageView iconImageView;
+    private ImageView locationImageView;
     private EditText hourEditText;
     private EditText minuteEditText;
     private EditText descriptionEditText;
@@ -118,11 +131,11 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private Switch setLocationButton;
     private double phLatitude = 12.8797;
     private double phLongitude = 121.7740;
+    private ProgressBar progressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         descriptionEditText = findViewById(R.id.descriptionEditText);
         todayButton = findViewById(R.id.todayButton);
         yesterdayButton = findViewById(R.id.yesterdayButton);
@@ -130,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         timeButton = findViewById(R.id.timeButton);
         hourEditText = findViewById(R.id.hourEditText);
         imageContainer = findViewById(R.id.imageLayout);
-        mapView = findViewById(R.id.mapView);
+        mapView = findViewById(R.id.mainMapView);
         mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
         viewMaps = findViewById(R.id.viewMapsButton);
         locationTextView = findViewById(R.id.locationTextView);
@@ -148,6 +161,8 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         minuteIncreaseButton = findViewById(R.id.minuteIncreaseButton);
         minuteDecreaseButton = findViewById(R.id.minuteDecreaseButton);
         barangayTextInputLayouts = findViewById(R.id.barangaySpinner);
+        progressBar = findViewById(R.id.progressBar);
+        locationImageView = findViewById(R.id.locationImageView);
 
         // Configure the OpenStreetMap cache
         Configuration.getInstance().setUserAgentValue(getPackageName());
@@ -159,7 +174,6 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             @Override
             public void onClick(View v) {
                 Log.d("MainActivity", "Submit Button was clicked");
-                reportCrime();
             }
         });
 
@@ -459,6 +473,12 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         }
     }
     public void onLocationSelected(double retrievedLatitude, double retrievedLongitude) {
+
+        if (userMarker != null) {
+            mapView.getOverlays().remove(userMarker);
+            mapView.invalidate();
+            userMarker = null;
+        }
         Log.d("MainActivity", "onlocationSelected - Latitude retrieved: " + retrievedLatitude);
         Log.d("MainActivity", "onlocationSelected - Longitude retrieved: " + retrievedLongitude);
 
@@ -467,6 +487,9 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         longitude = retrievedLongitude;
         Log.d("MainActivity", "onlocationSelected - New value of Latitude :" + latitude);
         Log.d("MainActivity", "onlocationSelected - New value of Longitude :" + longitude);
+
+        new ConvertCoordinatesTask().execute(latitude, longitude);
+
         // Update the map view to show the retrieved location
         if (mapView != null) {
             // Update the map view with a marker at the user's location
@@ -486,10 +509,17 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     }
 
     private void showLocationBottomSheet() {
+        // Check if the fragment is already visible
+        Fragment existingFragment = getSupportFragmentManager().findFragmentByTag("location_bottom_sheet_fragment");
+        if (existingFragment != null && existingFragment.isVisible()) {
+            // Fragment is already visible, do not show another instance
+            return;
+        }
+
         // Create a new instance of the LocationBottomSheetFragment
         LocationBottomSheetFragment fragment = LocationBottomSheetFragment.newInstance(latitude, longitude);
-        Log.d("MainActivity", "showLocationBottomSheet - New value of Latitude :" + latitude);
-        Log.d("MainActivity", "showLocationBottomSheet - New value of Longitude :" + longitude);
+        Log.d("MainActivity", "showLocationBottomSheet - New value of Latitudess :" + latitude);
+        Log.d("MainActivity", "showLocationBottomSheet - New value of Longitudes :" + longitude);
         // Set the LocationSelectionListener on the fragment (which is MainActivity)
         fragment.setLocationSelectionListener(this);
 
@@ -497,6 +527,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragment.show(fragmentManager, "location_bottom_sheet_fragment");
     }
+
 
     private void showBottomSheetDialog() {
         // Create a bottom sheet dialog
@@ -690,6 +721,12 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         TextView gifTextView = findViewById(R.id.gifTextView);
         gifTextView.setVisibility(View.VISIBLE);
 
+        if (userMarker != null) {
+            mapView.getOverlays().remove(userMarker);
+            mapView.invalidate();
+            userMarker = null;
+        }
+
         if (!setLocationButton.isChecked()) {
             Log.e("MainActivity", "Switch button was turned off");
             // If the switch is turned off, reset the location flag and return
@@ -709,7 +746,6 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             public void onLocationChanged(Location location) {
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
-
                 // Reverse geocode the latitude and longitude to get the location address
                 Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
                 try {
@@ -720,6 +756,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
 
                         if (!isLocationSet) {
                             locationTextView.setText(address.getAddressLine(0));
+
                             new ConvertCoordinatesTask().execute(latitude, longitude);
 
                             // Update the map view with a marker at the user's location
@@ -738,6 +775,8 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                             gifTextView.setVisibility(View.GONE);
                             // Update the flag to indicate that the location is set
                             isLocationSet = true;
+
+
                         }
                     }
                 } catch (IOException e) {
@@ -768,8 +807,28 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             Log.d("MainActivity", "setLocationMethod - Permission to open location not allowed");
         }
     }
+    private Handler handler = new Handler();
+    private Runnable hideProgressBarRunnable = new Runnable() {
+        @Override
+        public void run() {
+            progressBar.setVisibility(View.GONE);
+        }
+    };
 
     private class ConvertCoordinatesTask extends AsyncTask<Double, Void, String> {
+        private final double LATITUDE_ADJUSTMENT = 0.0001;
+        private final double LONGITUDE_ADJUSTMENT = 0.0001;
+        @Override
+        protected void onPreExecute() {
+            progressBar.setVisibility(View.VISIBLE); // Show the progress bar
+            progressBar.setIndeterminate(true); // Set the ProgressBar to indeterminate mode
+            progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary), PorterDuff.Mode.SRC_IN); // Set the color of the ProgressBar
+            // Disable the button
+            barangayTextInputLayouts.setEnabled(false);
+            barangayTextInputLayouts.setVisibility(View.GONE); // Show the progress bar
+            locationImageView.setVisibility(View.GONE);
+        }
+
         @Override
         protected String doInBackground(Double... params) {
             double latitude = params[0];
@@ -777,44 +836,131 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             Log.d("MainActivty", "ConvertCoordinatesTask - Passed latitude value: " + latitude);
             Log.d("MainActivty", "ConvertCoordinatesTask - Passed longitude value: " + longitude);
             String barangay = null;
+            int loopCount = 0; // Counter variable for loop iterations
 
             try {
-                String url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + latitude + "&lon=" + longitude;
-                Log.d("MainActivty", "ConvertCoordinatesTask - OpenStreetmaps URL: " + url);
-                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-                connection.setRequestMethod("GET");
+                double adjustment = LATITUDE_ADJUSTMENT;
+                while (barangay == null) {
+                    loopCount++; // Increment loop counter
 
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
+                    String url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + latitude + "&lon=" + longitude;
+                    HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                    connection.setRequestMethod("GET");
 
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
+                    if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        StringBuilder response = new StringBuilder();
+                        String line;
+
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+
+                        reader.close();
+                        JSONObject jsonObject = new JSONObject(response.toString());
+                        JSONObject addressObject = jsonObject.getJSONObject("address");
+                        String village = addressObject.optString("village");
+                        if (village != null && !village.isEmpty()) {
+                            barangay = addressObject.optString("village");
+                            Log.d("MainActivty", "ConvertCoordinatesTask - User barangay using OpenStreets: " + barangay);
+                        } else if (barangay == null){
+                            // Call the method to load barangays from CSV and get the corresponding barangay name
+                            barangay = loadBarangaysFromCSV(latitude, longitude);
+                            Log.d("MainActivty", "ConvertCoordinatesTask - loadBarangaysFromCSV has started");
+                        }  else {
+                            Log.d("MainActivty", "ConvertCoordinatesTask - Adjusting coordinates");
+                            // Adjust the latitude and longitude based on the current adjustment value
+                            latitude += adjustment;
+
+                            // Toggle the adjustment direction
+                            if (adjustment > 0) {
+                                adjustment = -adjustment;
+                            } else {
+                                adjustment = -adjustment + LATITUDE_ADJUSTMENT;
+                                longitude += LONGITUDE_ADJUSTMENT;
+                            }
+                        }
                     }
-
-                    reader.close();
-                    JSONObject jsonObject = new JSONObject(response.toString());
-                    JSONObject addressObject = jsonObject.getJSONObject("address");
-
-                    barangay = addressObject.optString("village");
-                    Log.d("MainActivty", "ConvertCoordinatesTask - User barangay using OpenStreets: " + barangay);
-
                 }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
 
+            Log.d("MainActivty", "ConvertCoordinatesTask - Loop count: " + loopCount); // Log the loop count
+
             return barangay;
         }
 
+
         @Override
         protected void onPostExecute(String result) {
-            if (isLocationSet && result != null) {
+            if (result != null) {
                 // Update the location address in the UI
                 barangayTextInputLayouts.setText(result);
+                Log.d("MainActivty", "ConvertCoordinatesTask - Final detected barangay: " + barangayTextInputLayouts); // Log the loop count
+            } else {
+                // If the barangay is not found using OpenStreets and CSV,
+                // set an appropriate message or handle it as needed
+                barangayTextInputLayouts.setText("Barangay not found");
             }
+            progressBar.setVisibility(View.GONE); // Hide the progress bar
+            // Enable the button
+            barangayTextInputLayouts.setEnabled(true);
+            barangayTextInputLayouts.setVisibility(View.VISIBLE); // Show the progress bar
+            locationImageView.setVisibility(View.VISIBLE);
         }
+    }
+
+    private String loadBarangaysFromCSV(double sampleLatitude, double sampleLongitude) {
+        try {
+            // Open the CSV file from the assets folder
+            InputStream inputStream = getAssets().open("Barangays.csv");
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader reader = new BufferedReader(inputStreamReader);
+
+            Log.e("MainActivity", "loadBarangaysFromCSV - Passed Latitudes value: " + sampleLatitude);
+            Log.e("MainActivity", "loadBarangaysFromCSV - Passed Longitude value: " + sampleLongitude);
+
+            // Round off the sampleLatitude and sampleLongitude to their nearest third decimal value
+            sampleLatitude = roundToNearestThirdDecimal(sampleLatitude);
+            sampleLongitude = roundToNearestThirdDecimal(sampleLongitude);
+
+            Log.e("MainActivity", "loadBarangaysFromCSV - Passed Latitude value: " + String.format("%.3f", sampleLatitude));
+            Log.e("MainActivity", "loadBarangaysFromCSV - Passed Longitude value: " + String.format("%.3f", sampleLongitude));
+
+            // Read each line of the CSV file
+            String line;
+            String correspondingBarangayName = ""; // Variable to store the corresponding barangay name
+
+            while ((line = reader.readLine()) != null) {
+                // Split the line by comma
+                String[] barangayData = line.split(",");
+
+                // Get the latitude and longitude values from the CSV
+                double latitude = Double.parseDouble(barangayData[12]);
+                double longitude = Double.parseDouble(barangayData[11]);
+
+                // Check if the latitude and longitude values match the sample location
+                if (latitude == sampleLatitude && longitude == sampleLongitude) {
+                    // Sample location found
+                    correspondingBarangayName = barangayData[4];
+                    Log.e("MainActivity", "loadBarangaysFromCSV - Corresponding Barangay name: " + correspondingBarangayName);
+                    break; // Exit the loop since we found the sample location
+                }
+            }
+
+            // Close the reader
+            reader.close();
+
+            return correspondingBarangayName;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ""; // Return an empty string if no corresponding barangay name is found
+    }
+
+    private double roundToNearestThirdDecimal(double value) {
+        return Math.round(value * 1000.0) / 1000.0;
     }
 
     // Helper method to convert content URI to Bitmap

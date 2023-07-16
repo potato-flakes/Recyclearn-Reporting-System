@@ -95,6 +95,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:hint="Search barangay here"
+                    android:inputType="text"
                     android:fontFamily="@font/poppinsmedium"
                     style="@style/SearchEditTextStyle" />
 
@@ -145,14 +146,12 @@
             android:id="@+id/saveButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:fontFamily="@font/poppinsmedium"
             android:textColor="@color/white"
-            android:background="@color/colorPrimary"
+            android:background="@drawable/button_selected_shape"
             android:layout_alignParentBottom="true"
             android:text="Save" />
 
     </RelativeLayout>
-
-
 </androidx.cardview.widget.CardView>
