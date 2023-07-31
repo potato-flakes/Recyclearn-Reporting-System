@@ -13,4 +13,10 @@
             <item>AM</item>
             <item>PM</item>
     </string-array>
+    <array name="crime_types_array">
+        <item>Crime Type 1</item>
+        <item>Crime Type 2</item>
+        <item>Crime Type 3</item>
+        <!-- Add more crime types as needed -->
+    </array>
 </resources>

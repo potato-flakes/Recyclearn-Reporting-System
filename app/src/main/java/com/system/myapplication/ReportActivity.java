@@ -22,7 +22,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,8 +33,8 @@ public class ReportActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ReportAdapter reportAdapter;
     private List<Report> reportList;
-    private static final String API_URL = "http://192.168.1.12/recyclearn/report_user/get_reports.php?userId=";
-    private static final String DELETE_API_URL = "http://192.168.1.12/recyclearn/report_user";
+    private static final String API_URL = "http://192.168.1.37/recyclearn/report_user/get_reports.php?userId=";
+    private static final String DELETE_API_URL = "http://192.168.1.37/recyclearn/report_user";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +111,7 @@ public class ReportActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Open the MainActivity to create a new report
-                Intent intent = new Intent(ReportActivity.this, MainActivity.class);
+                Intent intent = new Intent(ReportActivity.this, createReport_activity.class);
                 startActivity(intent);
                 Log.d("Button", "Create Report Button was clicked"); // Log the image URL
             }

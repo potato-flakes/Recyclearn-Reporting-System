@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Reporting System</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello type of crime fragment</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
 </resources>

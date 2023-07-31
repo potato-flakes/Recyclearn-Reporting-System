@@ -1,7 +1,24 @@
 package com.system.myapplication;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
+import android.app.Activity;
+import android.os.Bundle;
+
+import androidx.annotation.AnimatorRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import android.os.Looper;
+import android.transition.TransitionManager;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +27,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -18,41 +34,29 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.viewpager.widget.ViewPager;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -63,10 +67,8 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.squareup.picasso.Picasso;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -92,13 +94,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import pl.droidsonroids.gif.GifImageView;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
 
+public class Step2Fragment extends Fragment implements LocationSelectionListener {
 
-public class MainActivity extends AppCompatActivity implements LocationSelectionListener {
+    private static final int PERMISSION_REQUEST_CODE = 1;
+    private TextView textViewValue;
     private String formattedDate;
     private List<String> barangayOptions = new ArrayList<>();
     private List<String> imageUrls = new ArrayList<>();
@@ -106,6 +106,8 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
     private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
     private LinearLayout imageContainer;
+    private LinearLayout enterPersonNameLayout;
+    private LinearLayout enterPersonEditTextNameLayout;
     private RelativeLayout timeButton;
     private LocationManager locationManager;
     private LocationListener locationListener;
@@ -115,6 +117,8 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private Button selectDateButton;
     private Button viewMaps;
     private Button barangayTextInputLayouts;
+    private Button yesButton;
+    private Button noButton;
     private double latitude;
     private double longitude;
     private TextView locationTextView;
@@ -123,15 +127,18 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private TextView amTextView;
     private TextView pmTextView;
     private TextView text_view_progress;
+    private TextView personNameLabel;
     private ImageView hourIncreaseButton;
     private ImageView hourDecreaseButton ;
     private ImageView minuteIncreaseButton;
     private ImageView minuteDecreaseButton;
     private ImageView iconImageView;
     private ImageView locationImageView;
+    private ImageView enterPersonNameImageView;
     private EditText hourEditText;
     private EditText minuteEditText;
     private EditText descriptionEditText;
+    private EditText enterPersonEditTexts;
     private boolean isLocationSet;
     private Marker userMarker;
     private Switch setLocationButton;
@@ -139,85 +146,55 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private double phLongitude = 121.7740;
     private ProgressBar progressBar;
     private ProgressBar userProgressBar;
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    private GifImageView loadingImageView;
+    private TextView gifTextView;
+    private static final int RESULT_OK = Activity.RESULT_OK;
 
-        descriptionEditText = findViewById(R.id.descriptionEditText);
-        todayButton = findViewById(R.id.todayButton);
-        yesterdayButton = findViewById(R.id.yesterdayButton);
-        selectDateButton = findViewById(R.id.selectDateButton);
-        timeButton = findViewById(R.id.timeButton);
-        hourEditText = findViewById(R.id.hourEditText);
-        imageContainer = findViewById(R.id.imageLayout);
-        mapView = findViewById(R.id.mainMapView);
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_step2, container, false);
+
+        descriptionEditText = view.findViewById(R.id.descriptionEditText);
+        textViewValue = view.findViewById(R.id.textViewValue);
+        todayButton = view.findViewById(R.id.todayButton);
+        yesterdayButton = view.findViewById(R.id.yesterdayButton);
+        selectDateButton = view.findViewById(R.id.selectDateButton);
+        timeButton = view.findViewById(R.id.timeButton);
+        hourEditText = view.findViewById(R.id.hourEditText);
+        imageContainer = view.findViewById(R.id.imageLayout);
+        mapView = view.findViewById(R.id.mainMapView);
         mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-        viewMaps = findViewById(R.id.viewMapsButton);
-        locationTextView = findViewById(R.id.locationTextView);
-        yesterdayButton = findViewById(R.id.yesterdayButton);
-        selectDateButton = findViewById(R.id.selectDateButton);
-        dateTextView = findViewById(R.id.dateTextView);
-        iconImageView = findViewById(R.id.iconImageView);
-        timeLabel = findViewById(R.id.timeLabel);
-        hourEditText = findViewById(R.id.hourEditText);
-        minuteEditText = findViewById(R.id.minuteEditText);
-        amTextView = findViewById(R.id.amTextView);
-        pmTextView = findViewById(R.id.pmTextView);
-        hourIncreaseButton = findViewById(R.id.hourIncreaseButton);
-        hourDecreaseButton = findViewById(R.id.hourDecreaseButton);
-        minuteIncreaseButton = findViewById(R.id.minuteIncreaseButton);
-        minuteDecreaseButton = findViewById(R.id.minuteDecreaseButton);
-        barangayTextInputLayouts = findViewById(R.id.barangaySpinner);
-        progressBar = findViewById(R.id.progressBar);
-        userProgressBar = findViewById(R.id.userProgressBar);
-        locationImageView = findViewById(R.id.locationImageView);
-        text_view_progress = findViewById(R.id.text_view_progress);
+        viewMaps = view.findViewById(R.id.viewMapsButton);
+        locationTextView = view.findViewById(R.id.locationTextView);
+        yesterdayButton = view.findViewById(R.id.yesterdayButton);
+        selectDateButton = view.findViewById(R.id.selectDateButton);
+        dateTextView = view.findViewById(R.id.dateTextView);
+        iconImageView = view.findViewById(R.id.iconImageView);
+        timeLabel = view.findViewById(R.id.timeLabel);
+        hourEditText = view.findViewById(R.id.hourEditText);
+        minuteEditText = view.findViewById(R.id.minuteEditText);
+        amTextView = view.findViewById(R.id.amTextView);
+        pmTextView = view.findViewById(R.id.pmTextView);
+        hourIncreaseButton = view.findViewById(R.id.hourIncreaseButton);
+        hourDecreaseButton = view.findViewById(R.id.hourDecreaseButton);
+        minuteIncreaseButton = view.findViewById(R.id.minuteIncreaseButton);
+        minuteDecreaseButton = view.findViewById(R.id.minuteDecreaseButton);
+        barangayTextInputLayouts = view.findViewById(R.id.barangaySpinner);
+        progressBar = view.findViewById(R.id.progressBar);
+        userProgressBar = view.findViewById(R.id.userProgressBar);
+        locationImageView = view.findViewById(R.id.locationImageView);
+        text_view_progress = view.findViewById(R.id.text_view_progress);
+        loadingImageView = view.findViewById(R.id.loadingImageView);
+        gifTextView = view.findViewById(R.id.gifTextView);
+        enterPersonNameLayout = view.findViewById(R.id.enterPersonNameLayout);
+        enterPersonNameImageView = view.findViewById(R.id.enterPersonNameImageView);
+        personNameLabel = view.findViewById(R.id.personNameLabel);
+        enterPersonEditTextNameLayout = view.findViewById(R.id.enterPersonEditTextNameLayout);
+        enterPersonEditTexts = view.findViewById(R.id.enterPersonEditTexts);
 
         imageUrls = new ArrayList<>();
 
-        descriptionEditText.addTextChangedListener(new TextWatcher() {
-            boolean isFilled = false;
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                updateProgress();
-            }
-
-            private void updateProgress() {
-                String input = descriptionEditText.getText().toString().trim();
-                int progress = userProgressBar.getProgress();
-
-                if (!isFilled && !input.isEmpty() && progress < 100) {
-                    progress += 10;
-                    userProgressBar.setProgress(progress);
-                    isFilled = true; // Mark as filled to prevent further increases
-
-                    // Calculate the percentage
-                    int percentage = progress * 10;
-                    String progressText = String.valueOf(percentage) + "%";
-                    text_view_progress .setText(progressText);
-                } else if (isFilled && input.isEmpty() && progress > 0) {
-                    progress -= 10;
-                    userProgressBar.setProgress(progress);
-                    isFilled = false; // Mark as empty to allow increases when filled again
-
-                    // Calculate the percentage
-                    int percentage = progress * 10;
-                    String progressText = String.valueOf(percentage) + "%";
-                    text_view_progress .setText(progressText);
-                }
-            }
-        });
 
         mapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -227,15 +204,23 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             }
         });
 
-        Button submitButton = findViewById(R.id.submitButton);
+        Button submitButton = view.findViewById(R.id.submitButton);
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Create an instance of Step2Fragment and set the arguments
+                Step3Fragment step3Fragment = new Step3Fragment();
+
+                // Set Step1Fragment as the target fragment for Step2Fragment
+                step3Fragment.setTargetFragment(Step2Fragment.this, 1);
+
+                // Navigate to Step2Fragment
+                ((createReport_activity) requireActivity()).navigateToNextFragment(step3Fragment);
                 Log.d("MainActivity", "Submit Button was clicked");
             }
         });
 
-        Button addImageButton = findViewById(R.id.addImageButton);
+        Button addImageButton = view.findViewById(R.id.addImageButton);
         addImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -244,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             }
         });
 
-        setLocationButton = findViewById(R.id.locationSwitch);
+        setLocationButton = view.findViewById(R.id.locationSwitch);
         setLocationButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -273,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
 
         todayButton.setSelected(true);
         todayButton.setTextColor(getResources().getColor(R.color.selected_text_color)); // Set the desired text color for selected state
-        todayButton.setBackground(getDrawable(R.drawable.button_selected_shape));
+        todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
         todayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -287,9 +272,9 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                 yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
                 selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
 
-                todayButton.setBackground(getDrawable(R.drawable.button_selected_shape));
-                yesterdayButton.setBackground(getDrawable(R.drawable.button_unselected_shape));
-                selectDateButton.setBackground(getDrawable(R.drawable.button_unselected_shape));
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
 
                 // Get the current date
                 Calendar currentDate = Calendar.getInstance();
@@ -313,9 +298,9 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                 yesterdayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
                 selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
 
-                todayButton.setBackground(getDrawable(R.drawable.button_unselected_shape));
-                yesterdayButton.setBackground(getDrawable(R.drawable.button_selected_shape));
-                selectDateButton.setBackground(getDrawable(R.drawable.button_unselected_shape));
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext() ,R.drawable.button_unselected_shape));
 
                 // Get the previous day's date
                 Calendar previousDate = Calendar.getInstance();
@@ -340,13 +325,26 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                 yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
                 selectDateButton.setTextColor(getResources().getColor(R.color.selected_text_color));
 
-                todayButton.setBackground(getDrawable(R.drawable.button_unselected_shape));
-                yesterdayButton.setBackground(getDrawable(R.drawable.button_unselected_shape));
-                selectDateButton.setBackground(getDrawable(R.drawable.button_selected_shape));
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
 
                 showDatePicker();
             }
         });
+
+        // Find the ImageView by its ID
+        ImageView iconImageView = view.findViewById(R.id.iconImageView);
+
+        // Set the click listener for the ImageView
+        iconImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle the click event here
+                onDateIconClick();
+            }
+        });
+
         viewMaps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -375,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         Log.d("MainActivity", "Current Hour is: " + hourEditText);
         Log.d("MainActivity", "Current Minute is: " + minuteEditText);
 
-        int prmyClr = ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary);
+        int prmyClr = ContextCompat.getColor(requireContext(), R.color.colorPrimary);
         // Set the click listeners for AM and PM TextViews
         if (hourOfDay >= 12) {
             // PM selected
@@ -529,6 +527,99 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             mapView.invalidate();
             userMarker = null;
         }
+
+        LinearLayout typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
+        typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
+            }
+        });
+
+        // Get the value from the arguments and display it in the TextView
+        Bundle bundle = getArguments();
+        if (bundle != null) {
+            String valueFromStep1 = bundle.getString("selectedCrimeType");
+            if (valueFromStep1 != null) {
+                textViewValue.setText(valueFromStep1);
+            }
+        }
+        // Find the Yes and No buttons
+        yesButton = view.findViewById(R.id.yesButton);
+        noButton = view.findViewById(R.id.noButton);
+
+        // Change the background color of the Yes button to colorPrimary
+        yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
+        // Revert the background color of the No button to the default color
+        noButton.setBackgroundResource(R.drawable.button_selector);
+
+        // Change the text color of the No button to colorPrimary
+        noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+        // Revert the text color of the Yes button to the default color
+        yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+        LinearLayout animatedLayout = view.findViewById(R.id.animatedLayout);
+        // Set click listeners for the buttons
+        yesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Change the background color of the Yes button to colorPrimary
+                yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
+                // Revert the background color of the No button to the default color
+                noButton.setBackgroundResource(R.drawable.button_selector);
+
+                // Change the text color of the No button to colorPrimary
+                noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+                // Revert the text color of the Yes button to the default color
+                yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+                // Apply the click animation
+                applyClickAnimation(R.animator.button_scale, v);
+
+                // Slide up the views using TransitionManager
+                TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
+                animatedLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
+        noButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Change the background color of the No button to colorPrimary
+                noButton.setBackgroundResource(R.drawable.yes_toggle_background);
+                // Revert the background color of the Yes button to the default color
+                yesButton.setBackgroundResource(R.drawable.button_selector);
+
+                // Change the text color of the Yes button to colorPrimary
+                yesButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+                // Revert the text color of the No button to the default color
+                noButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+                // Apply the click animation
+                applyClickAnimation(R.animator.button_scale, v);
+
+                // Slide down the views using TransitionManager
+                TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
+                animatedLayout.setVisibility(View.GONE);
+            }
+        });
+        Button backButton = view.findViewById(R.id.backButton);
+        // Inside Step2Fragment
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
+            }
+        });
+
+
+        return view;
+    }
+
+
+    private void applyClickAnimation(@AnimatorRes int animationResId, View view) {
+        Animator animator = AnimatorInflater.loadAnimator(requireContext(), animationResId);
+        animator.setTarget(view);
+        animator.start();
     }
 
     public void onLocationSelected(double retrievedLatitude, double retrievedLongitude) {
@@ -547,7 +638,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         Log.d("MainActivity", "onlocationSelected - New value of Latitude :" + latitude);
         Log.d("MainActivity", "onlocationSelected - New value of Longitude :" + longitude);
 
-        new ConvertCoordinatesTask().execute(latitude, longitude);
+        new Step2Fragment.ConvertCoordinatesTask().execute(latitude, longitude);
 
         // Update the map view to show the retrieved location
         if (mapView != null) {
@@ -569,7 +660,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
 
     private void showLocationBottomSheet() {
         // Check if the fragment is already visible
-        Fragment existingFragment = getSupportFragmentManager().findFragmentByTag("location_bottom_sheet_fragment");
+        Fragment existingFragment = requireActivity().getSupportFragmentManager().findFragmentByTag("location_bottom_sheet_fragment");
         if (existingFragment != null && existingFragment.isVisible()) {
             // Fragment is already visible, do not show another instance
             return;
@@ -583,14 +674,14 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         fragment.setLocationSelectionListener(this);
 
         // Show the fragment using a FragmentManager
-        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentManager fragmentManager = getChildFragmentManager();
         fragment.show(fragmentManager, "location_bottom_sheet_fragment");
     }
 
 
     private void showBottomSheetDialog() {
         // Create a bottom sheet dialog
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
 
         // Inflate the bottom sheet dialog content view
         View contentView = getLayoutInflater().inflate(R.layout.bottom_sheet_dialog_content, null);
@@ -600,7 +691,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         ListView barangayListView = contentView.findViewById(R.id.barangayListView);
 
         // Create a custom adapter for the ListView
-        CustomDropdownAdapter adapter = new CustomDropdownAdapter(this, barangayOptions);
+        CustomDropdownAdapter adapter = new CustomDropdownAdapter(requireContext(), barangayOptions);
         barangayListView.setAdapter(adapter);
 
         // Set the item click listener for list items
@@ -680,7 +771,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         dateTextView.startAnimation(animation);
     }
 
-    public void onIconClick(View view) {
+    public void onDateIconClick() {
         Log.d("MainActivity", "onIconClick - has started");
         // Animate the dateTextView and iconImageView to the right
         animateTextViewAndIconToRight();
@@ -746,7 +837,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         int month = calendar.get(Calendar.MONTH);
         int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
-        DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this, new DatePickerDialog.OnDateSetListener() {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                 // Create a SimpleDateFormat to format the date
@@ -774,10 +865,8 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private void setLocation() {
         Log.d("MainActivity", "setLocation - Set Location Button was clicked");
         // Show the loading GIF
-        GifImageView loadingImageView = findViewById(R.id.loadingImageView);
         loadingImageView.setVisibility(View.VISIBLE);
 
-        TextView gifTextView = findViewById(R.id.gifTextView);
         gifTextView.setVisibility(View.VISIBLE);
 
         if (userMarker != null) {
@@ -799,14 +888,14 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
 
         Log.e("MainActivity", "Switch button was turned on");
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
                 // Reverse geocode the latitude and longitude to get the location address
-                Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
                 try {
                     List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
                     if (addresses != null && addresses.size() > 0) {
@@ -816,7 +905,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                         if (!isLocationSet) {
                             locationTextView.setText(address.getAddressLine(0));
 
-                            new ConvertCoordinatesTask().execute(latitude, longitude);
+                            new Step2Fragment.ConvertCoordinatesTask().execute(latitude, longitude);
 
                             // Update the map view with a marker at the user's location
                             GeoPoint userLocation = new GeoPoint(latitude, longitude);
@@ -858,11 +947,11 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         };
 
         // Request location updates only if the permission is granted
-        if (setLocationButton.isChecked() && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (setLocationButton.isChecked() && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
             Log.d("MainActivity", "setLocationMethod - Permission to open location allowed");
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             Log.d("MainActivity", "setLocationMethod - Permission to open location not allowed");
         }
     }
@@ -881,7 +970,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         protected void onPreExecute() {
             progressBar.setVisibility(View.VISIBLE); // Show the progress bar
             progressBar.setIndeterminate(true); // Set the ProgressBar to indeterminate mode
-            progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.colorPrimary), PorterDuff.Mode.SRC_IN); // Set the color of the ProgressBar
+            progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(requireContext(), R.color.colorPrimary), PorterDuff.Mode.SRC_IN); // Set the color of the ProgressBar
             // Disable the button
             barangayTextInputLayouts.setEnabled(false);
             barangayTextInputLayouts.setVisibility(View.GONE); // Show the progress bar
@@ -973,7 +1062,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     private String loadBarangaysFromCSV(double sampleLatitude, double sampleLongitude) {
         try {
             // Open the CSV file from the assets folder
-            InputStream inputStream = getAssets().open("Barangays.csv");
+            InputStream inputStream = requireContext().getAssets().open("Barangays.csv");
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
             BufferedReader reader = new BufferedReader(inputStreamReader);
 
@@ -1024,7 +1113,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
 
     // Helper method to convert content URI to Bitmap
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
-        InputStream inputStream = getContentResolver().openInputStream(uri);
+        InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
         inputStream.close();
         return bitmap;
@@ -1086,24 +1175,27 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                         // Upload the images to the server
                         boolean imageUploadSuccess = uploadImagesToServer(imageUrls, reportId);
 
-                        // Display a success message or error message
-                        runOnUiThread(new Runnable() {
+                        // Inside your Step2Fragment
+                        Handler handler = new Handler(Looper.getMainLooper());
+
+// To run code on the UI thread, use the handler like this:
+                        handler.post(new Runnable() {
                             @Override
                             public void run() {
                                 if (imageUploadSuccess) {
-                                    Toast.makeText(getApplicationContext(), "Crime reported successfully", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(), "Crime reported successfully", Toast.LENGTH_SHORT).show();
                                 } else {
-                                    Toast.makeText(getApplicationContext(), "Failed to upload images", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(), "Failed to upload images", Toast.LENGTH_SHORT).show();
                                     Log.e("MainActivity", "reportCrime - Check uploadImagesToServer method");
                                 }
                             }
                         });
                     } else {
                         // Display an error message
-                        runOnUiThread(new Runnable() {
+                        handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(getApplicationContext(), "Response from server does not match", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), "Response from server does not match", Toast.LENGTH_SHORT).show();
                                 Log.e("MainActivity", "reportCrime - Check report.php");
                             }
                         });
@@ -1111,10 +1203,10 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                 } catch (IOException | JSONException e) {
                     e.printStackTrace();
                     // Display an error message
-                    runOnUiThread(new Runnable() {
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getApplicationContext(), "Please check the inputted details", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(requireContext(), "Please check the inputted details", Toast.LENGTH_SHORT).show();
                             Log.e("MainActivity", "reportCrime - Check inputted detailes");
                         }
                     });
@@ -1126,7 +1218,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     // Helper method to upload and save the image file on the server
     private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
         Log.d("MainActivity", "uploadImagesToServer - has started");
-        RequestQueue queue = Volley.newRequestQueue(Objects.requireNonNull(getApplicationContext()));
+        RequestQueue queue = Volley.newRequestQueue(requireContext());
         String url = "http://192.168.1.6/recyclearn/report_user/upload.php";
         boolean success = true;
         final AtomicInteger uploadCounter = new AtomicInteger(0);
@@ -1137,21 +1229,21 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                         public void onResponse(String response) {
                             Log.d("MainActivity", "uploadImagesToServer - Condition: " + response);
                             if (Objects.equals(response, "success")) {
-                                Toast.makeText(getApplicationContext(), "Image uploaded", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), "Image uploaded", Toast.LENGTH_SHORT).show();
                                 int count = uploadCounter.incrementAndGet();
                                 if (count == imageUrls.size()) {
                                     // All images have been uploaded
-                                    runOnUiThread(new Runnable() {
+                                    new Handler(Looper.getMainLooper()).post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            Toast.makeText(getApplicationContext(), "Image/s are successfully uploaded ", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(requireContext(), "Image/s are successfully uploaded ", Toast.LENGTH_SHORT).show();
                                             Log.d("MainActivity", "uploadImagesToServer - Number of uploaded images : " + count);
                                             clearForm();
                                         }
                                     });
                                 }
                             } else {
-                                Toast.makeText(getApplicationContext(), "Image upload failed", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(requireContext(), "Image upload failed", Toast.LENGTH_SHORT).show();
                                 Log.e("MainActivity", "uploadImagesToServer - Check upload.php");
                             }
                         }
@@ -1159,7 +1251,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                     new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            Toast.makeText(getApplicationContext(), error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                            Toast.makeText(requireContext(), error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                         }
                     }) {
                 @Override
@@ -1196,7 +1288,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         barangayTextInputLayouts.setText("");
         imageUrls.clear();
         imageContainer.removeAllViews();
-        finish();
+        requireActivity().finish();
         Log.d("MainActivity", "clearForm - Form Cleared");
     }
 
@@ -1211,7 +1303,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGES_REQUEST_CODE && resultCode == RESULT_OK) {
             if (data != null && data.getClipData() != null) {
@@ -1247,7 +1339,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
 
     private void displayImages() {
         Log.d("MainActivity", "displayImages - has started");
-        runOnUiThread(new Runnable() {
+        requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 // Clear the imageContainer before adding the new images
@@ -1256,7 +1348,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                 // Load and display the images from the imageUrls list
                 for (final String imageUrl : imageUrls) {
                     // Create a new FrameLayout to hold the ImageView and delete button
-                    FrameLayout imageLayout = new FrameLayout(MainActivity.this);
+                    FrameLayout imageLayout = new FrameLayout(requireActivity());
                     LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
@@ -1270,7 +1362,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                     imageLayout.setLayoutParams(layoutParams);
 
                     // Create a new ImageView for the image
-                    ImageView imageView = new ImageView(MainActivity.this);
+                    ImageView imageView = new ImageView(requireActivity());
                     FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
                             getResources().getDimensionPixelSize(R.dimen.image_width),
                             getResources().getDimensionPixelSize(R.dimen.image_height)
@@ -1287,7 +1379,7 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
                             .into(imageView);
 
                     // Create a new delete button
-                    Button deleteButton = new Button(MainActivity.this);
+                    Button deleteButton = new Button(requireActivity());
                     FrameLayout.LayoutParams deleteButtonParams = new FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
                             FrameLayout.LayoutParams.WRAP_CONTENT
@@ -1326,7 +1418,8 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
         if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             // Permission granted, request location updates
             if (locationManager != null) {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
@@ -1340,15 +1433,31 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
             }
         } else {
             // Permission denied, handle accordingly
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
                 // The user has denied the permission but hasn't selected "Don't ask again"
                 // You can show a dialog or message explaining why the permission is needed and request it again
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_CODE);
             } else {
                 // The user has denied the permission and selected "Don't ask again"
                 // You can show a dialog or message informing the user that the permission is required and guide them to the app settings to enable it manually
-                Toast.makeText(this, "Location permission denied. Please enable it in the app settings.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireActivity(), "Location permission denied. Please enable it in the app settings.", Toast.LENGTH_SHORT).show();
             }
+        }
+
+    }
+    // Method to navigate back to Step1Fragment
+    private void navigateToStep1Fragment() {
+        // Get the selected crime type from the TextView
+        String selectedCrimeType = textViewValue.getText().toString();
+
+        // Get the target fragment (Step1Fragment)
+        Fragment targetFragment = getTargetFragment();
+        if (targetFragment instanceof Step1Fragment) {
+            // Pass the selected crime type back to Step1Fragment
+            ((Step1Fragment) targetFragment).setSelectedCrimeType(selectedCrimeType);
+
+            // Navigate back to Step1Fragment
+            ((createReport_activity) requireActivity()).navigateToNextFragment(targetFragment);
         }
 
     }

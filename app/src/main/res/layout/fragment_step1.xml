@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:background="@drawable/type_of_crime_background">
+
+    <TextView
+        android:id="@+id/descriptionLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:text="What kind of crime you want to report: "
+        android:textSize="17sp"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="15dp"
+        android:fontFamily="@font/poppinsmedium"
+        android:textColor="@android:color/black" />
+
+    <RadioGroup
+        android:id="@+id/crimeRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radioButton1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manyilab kayi"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="15sp"
+            android:padding="15dp"
+            android:button="@drawable/custom_radio_button" />
+        <!-- Add other RadioButtons with the custom background selector here -->
+
+
+        <!-- Add a horizontal divider here -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray" />
+
+        <RadioButton
+            android:id="@+id/radioButton2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Magkayi"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="15sp"
+            android:padding="15dp"
+            android:button="@drawable/custom_radio_button" />
+
+        <!-- Add a horizontal divider here -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray" />
+
+        <RadioButton
+            android:id="@+id/radioButton3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Itang kayi pin"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="15sp"
+            android:padding="15dp"
+            android:button="@drawable/custom_radio_button" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray" />
+
+        <RadioButton
+            android:id="@+id/radioButton4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manyilab kayi"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="15sp"
+            android:padding="15dp"
+            android:button="@drawable/custom_radio_button" />
+
+        <!-- Add a horizontal divider here -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray" />
+
+        <RadioButton
+            android:id="@+id/radioButton5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Magkayi"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="15sp"
+            android:padding="15dp"
+            android:button="@drawable/custom_radio_button" />
+
+        <!-- Add a horizontal divider here -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray" />
+
+        <RadioButton
+            android:id="@+id/radioButton6"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Itang kayi pin"
+            android:fontFamily="@font/poppinsmedium"
+            android:textSize="15sp"
+            android:padding="15dp"
+            android:button="@drawable/custom_radio_button" />
+
+    </RadioGroup>
+
+    <!-- Add optional space between views -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+    <!-- Optionally, you can add more UI elements here for additional input -->
+
+    <Button
+        android:id="@+id/nextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Continue to Crime details"
+        android:layout_gravity="center_horizontal"
+        android:textColor="@color/white"
+        android:background="@drawable/button_rounded_background"
+        android:textSize="14sp"
+        android:paddingStart="25dp"
+        android:paddingEnd="25dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
+
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Go Back"
+        android:textColor="@color/black"
+        android:background="@drawable/transparent_button_background"
+        android:layout_gravity="center_horizontal"
+        android:paddingStart="25dp"
+        android:paddingEnd="25dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:fontFamily="@font/poppinsmedium" />
+
+</LinearLayout>
