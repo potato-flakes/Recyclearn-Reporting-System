@@ -62,6 +62,8 @@ public class Step3Fragment extends Fragment {
         emailEditText = view.findViewById(R.id.editTextEmail);
         nextButton = view.findViewById(R.id.nextButton);
 
+        firstNameEditText.setText(userData.getCrimeDate());
+
         // Replace "your-server-url.com" with the actual URL of your server and PHP script
         String serverUrl = "http://192.168.1.37/recyclearn/report_user/get_user_details.php";
         String userId = "1"; // Replace this with the actual user ID you want to fetch
@@ -133,8 +135,7 @@ public class Step3Fragment extends Fragment {
             public void onClick(View v) {
                 // Validate the user input here if needed
 
-                // Save the user's input to the userData object
-                userData.setPersonalDetails(firstNameEditText.getText().toString() + " " + lastNameEditText.getText().toString());
+
 
                 // Show a success message
                 ((createReport_activity) requireActivity()).showFormComplete();

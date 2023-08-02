@@ -223,16 +223,17 @@
                 </LinearLayout>
 
                 <RelativeLayout
+                    android:id="@+id/buttonLayout"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="64dp"
+                    android:padding="2dp">
 
                     <LinearLayout
-                        android:id="@+id/buttonLayout"
+
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:orientation="horizontal"
-                        android:padding="2dp">
+                        android:orientation="horizontal">
 
                         <Button
                             android:id="@+id/todayButton"
@@ -265,12 +266,11 @@
                         android:id="@+id/dateTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="60dp"
-                        android:layout_alignParentStart="true"
-                        android:layout_toStartOf="@+id/iconImageView"
                         android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
                         android:textColor="@color/black"
                         android:textSize="30sp"
+                        android:layout_centerInParent="true"
                         android:visibility="gone" />
 
                     <ImageView
@@ -283,6 +283,7 @@
                         android:padding="10dp"
                         android:src="@drawable/back_icon"
                         android:visibility="gone" />
+
                 </RelativeLayout>
 
             </LinearLayout>

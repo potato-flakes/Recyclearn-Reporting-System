@@ -2,9 +2,11 @@ package com.system.myapplication;
 
 public class UserData {
     private String crimeType;
-    private String crimeDetails;
-    private String personalDetails;
-    private String summaryDetails;
+    private boolean isYesButtonSelected;
+    private String crimePerson;
+    private String crimeDate;
+    private String crimeTime;
+    private String crimeLocation;
 
     // Create getters and setters for each field
 
@@ -16,27 +18,48 @@ public class UserData {
         this.crimeType = crimeType;
     }
 
-    public String getCrimeDetails() {
-        return crimeDetails;
+    public String getCrimePerson() {
+        return crimePerson;
     }
 
-    public void setCrimeDetails(String crimeDetails) {
-        this.crimeDetails = crimeDetails;
+    public void setCrimePerson(String crimePerson) {
+        this.crimePerson = crimePerson;
+    }
+    public boolean isYesButtonSelected() {
+        return isYesButtonSelected;
     }
 
-    public String getPersonalDetails() {
-        return personalDetails;
+    public void setYesButtonSelected(boolean yesButtonSelected) {
+        isYesButtonSelected = yesButtonSelected;
     }
 
-    public void setPersonalDetails(String personalDetails) {
-        this.personalDetails = personalDetails;
+    public String getCrimeDate() {
+        return crimeDate;
     }
 
-    public String getSummaryDetails() {
-        return summaryDetails;
+    public void setCrimeDate(String crimeDate) {
+        this.crimeDate = crimeDate;
     }
 
-    public void setSummaryDetails(String summaryDetails) {
-        this.summaryDetails = summaryDetails;
+    public String getCrimeTime() {
+        return crimeTime;
+    }
+
+    public void setCrimeTime(String crimeTime) {
+        this.crimeTime = crimeTime;
+    }
+    public String getCrimeLocation() {
+        return crimeLocation;
+    }
+
+    public void setCrimeLocation(String crimeLocation) {
+        this.crimeLocation = crimeLocation;
+    }
+    public String getCrimeDescription() {
+        return crimeLocation;
+    }
+
+    public void setCrimeDescription(String crimeLocation) {
+        this.crimeLocation = crimeLocation;
     }
 }

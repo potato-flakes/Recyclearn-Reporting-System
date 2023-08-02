@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.Manifest;
 import android.app.DatePickerDialog;
@@ -83,6 +84,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -127,6 +129,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private TextView amTextView;
     private TextView pmTextView;
     private TextView personNameLabel;
+    private TextView gifTextView;
     private ImageView hourIncreaseButton;
     private ImageView hourDecreaseButton ;
     private ImageView minuteIncreaseButton;
@@ -145,10 +148,11 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private double phLongitude = 121.7740;
     private ProgressBar progressBar;
     private GifImageView loadingImageView;
-    private TextView gifTextView;
+
     private static final int RESULT_OK = Activity.RESULT_OK;
     private UserData userData;
-
+    private LinearLayout animatedLayout;
+    private RelativeLayout buttonLayout;
     public void setUserData(UserData userData) {
         this.userData = userData;
     }
@@ -194,8 +198,30 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         personNameLabel = view.findViewById(R.id.personNameLabel);
         enterPersonEditTextNameLayout = view.findViewById(R.id.enterPersonEditTextNameLayout);
         enterPersonEditTexts = view.findViewById(R.id.enterPersonEditTexts);
+        animatedLayout = view.findViewById(R.id.animatedLayout);
+        buttonLayout = view.findViewById(R.id.buttonLayout);
 
         imageUrls = new ArrayList<>();
+
+        // Populate the UI elements with data from the userData object (if available)
+        if (userData != null) {
+            String crimeType = userData.getCrimeType();
+           if (crimeType != null){
+               textViewValue.setText(userData.getCrimeType());
+           }
+            String person = userData.getCrimePerson();
+           if (person != null){
+               enterPersonEditTexts.setText(userData.getCrimePerson());
+            }
+            String crimeDate = userData.getCrimeDate();
+            if (crimeDate != null) {
+                // Update the date buttons based on the stored date
+                updateDateButtons(crimeDate);
+            }
+        } else {
+            Log.e("Step1Fragment", "onCreateView - userData is null");
+        }
+
 
         mapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -211,18 +237,13 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             @Override
             public void onClick(View v) {
                 // Save the user's input to the userData object
-                userData.setCrimeDetails("crimeDetailsEditText.getText().toString()");
+                userData.setCrimePerson(enterPersonEditTexts.getText().toString());
 
                 // Navigate to the next fragment (Step3Fragment)
                 ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
             }
 
         });
-        // Populate the UI elements with data from the userData object (if available)
-        if (userData != null) {
-            // For example, if you have an EditText for crime details:
-            textViewValue.setText(userData.getCrimeType());
-        }
 
         Button addImageButton = view.findViewById(R.id.addImageButton);
         addImageButton.setOnClickListener(new View.OnClickListener() {
@@ -259,10 +280,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 }
             }
         });
-
-        todayButton.setSelected(true);
-        todayButton.setTextColor(getResources().getColor(R.color.selected_text_color)); // Set the desired text color for selected state
-        todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
         todayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -277,13 +294,16 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
 
                 todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
-                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
-                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
 
                 // Get the current date
                 Calendar currentDate = Calendar.getInstance();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
                 formattedDate = dateFormat.format(currentDate.getTime());
+
+                userData.setCrimeDate(formattedDate);
+
                 Log.d("MainActivity", "Today Button was clicked");
                 Log.d("MainActivity", "Today's Date is: " + formattedDate);
             }
@@ -302,15 +322,18 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 yesterdayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
                 selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
 
-                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
                 yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
-                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext() ,R.drawable.button_unselected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext() ,R.drawable.button_background));
 
                 // Get the previous day's date
                 Calendar previousDate = Calendar.getInstance();
                 previousDate.add(Calendar.DAY_OF_MONTH, -1);
                 SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
                 formattedDate = dateFormat.format(previousDate.getTime());
+
+                userData.setCrimeDate(formattedDate);
+
                 Log.d("MainActivity", "Yesterday Button was clicked");
                 Log.d("MainActivity", "Yesterday's Date is: " + formattedDate);
             }
@@ -329,8 +352,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
                 selectDateButton.setTextColor(getResources().getColor(R.color.selected_text_color));
 
-                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
-                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_unselected_shape));
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
                 selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
 
                 showDatePicker();
@@ -552,7 +575,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
         // Revert the text color of the Yes button to the default color
         yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-        LinearLayout animatedLayout = view.findViewById(R.id.animatedLayout);
+
         // Set click listeners for the buttons
         yesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -573,6 +596,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 // Slide up the views using TransitionManager
                 TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
                 animatedLayout.setVisibility(View.VISIBLE);
+
+                userData.setYesButtonSelected(true);
             }
         });
 
@@ -595,6 +620,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 // Slide down the views using TransitionManager
                 TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
                 animatedLayout.setVisibility(View.GONE);
+
+                userData.setYesButtonSelected(false);
             }
         });
         Button backButton = view.findViewById(R.id.backButton);
@@ -610,6 +637,100 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         return view;
     }
 
+    private void updateDateButtons(String crimeDate) {
+        // Parse the stored date and create a Calendar instance
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+        Calendar selectedDate = Calendar.getInstance();
+        try {
+            selectedDate.setTime(dateFormat.parse(crimeDate));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // Get the current date for comparison
+        Calendar currentDate = Calendar.getInstance();
+
+        // Check if the stored date is today
+        if (selectedDate.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR) &&
+                selectedDate.get(Calendar.DAY_OF_YEAR) == currentDate.get(Calendar.DAY_OF_YEAR)) {
+            // Set the Today button as selected
+            todayButton.setSelected(true);
+            yesterdayButton.setSelected(false);
+            selectDateButton.setSelected(false);
+
+            // Update the text colors and backgrounds for the buttons accordingly
+            todayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+            yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+            selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+
+            todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+            yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+            selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+        } else {
+            // Calculate the previous date for comparison
+            Calendar previousDate = Calendar.getInstance();
+            previousDate.add(Calendar.DAY_OF_MONTH, -1);
+
+            // Check if the stored date is yesterday
+            if (selectedDate.get(Calendar.YEAR) == previousDate.get(Calendar.YEAR) &&
+                    selectedDate.get(Calendar.DAY_OF_YEAR) == previousDate.get(Calendar.DAY_OF_YEAR)) {
+                // Set the Yesterday button as selected
+                todayButton.setSelected(false);
+                yesterdayButton.setSelected(true);
+                selectDateButton.setSelected(false);
+
+                // Update the text colors and backgrounds for the buttons accordingly
+                todayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                yesterdayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+                selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+            } else {
+                // The stored date is neither today nor yesterday, set the Select Date button as selected
+                todayButton.setSelected(false);
+                yesterdayButton.setSelected(false);
+                selectDateButton.setSelected(true);
+
+                // Update the text colors and backgrounds for the buttons accordingly
+                todayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                selectDateButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+
+                animateButtonsToLeft();
+            }
+        }
+    }
+
+
+    private void updateButtonUI() {
+        // Check the isYesButtonSelected state from UserData and update the UI accordingly
+        if (userData.isYesButtonSelected()) {
+            yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
+            noButton.setBackgroundResource(R.drawable.button_selector);
+            noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+            animatedLayout.setVisibility(View.VISIBLE);
+        } else {
+            noButton.setBackgroundResource(R.drawable.yes_toggle_background);
+            yesButton.setBackgroundResource(R.drawable.button_selector);
+            yesButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            noButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+            animatedLayout.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Update the button UI based on the stored value in UserData
+        updateButtonUI();
+    }
 
     private void applyClickAnimation(@AnimatorRes int animationResId, View view) {
         Animator animator = AnimatorInflater.loadAnimator(requireContext(), animationResId);
@@ -722,13 +843,16 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     }
     private void animateButtonsToLeft() {
         Log.d("MainActivity", "animateButtonsToLeft - has started");
-        int translateDistance = -todayButton.getWidth();
+
+        int translateDistance = -buttonLayout.getWidth();
         Animation animation = new TranslateAnimation(0, translateDistance, 0, 0);
-        animation.setDuration(300); // Adjust the duration to make the animation smoother
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
 
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
+                // Update the button texts with the corresponding date
+                showTextViewFromRight(formattedDate);
             }
 
             @Override
@@ -737,8 +861,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 todayButton.setVisibility(View.GONE);
                 yesterdayButton.setVisibility(View.GONE);
                 selectDateButton.setVisibility(View.GONE);
-                // Update the button texts with the corresponding date
-                showTextViewFromRight(formattedDate);
+
             }
 
             @Override
@@ -754,6 +877,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private void showTextViewFromRight(String date) {
         Log.d("MainActivity", "showTextViewFromRight - has started");
         // Set the text for the TextView
+        if (userData != null){
+            String crimeDate = userData.getCrimeDate();
+            if (crimeDate != null){
+                date = userData.getCrimeDate();
+            }
+        }
         dateTextView.setText(date);
 
         // Update the visibility of the TextView
@@ -761,8 +890,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         iconImageView.setVisibility(View.VISIBLE);
 
         // Animate the TextView from the right side
-        Animation animation = new TranslateAnimation(dateTextView.getWidth(), 0, 0, 0);
-        animation.setDuration(300); // Adjust the duration to make the animation smoother
+        Animation animation = new TranslateAnimation(buttonLayout.getWidth(), 0, 0, 0);
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
         dateTextView.startAnimation(animation);
     }
 
@@ -771,25 +900,18 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         // Animate the dateTextView and iconImageView to the right
         animateTextViewAndIconToRight();
 
-        // Delay the animation of the buttons to ensure they appear after the dateTextView and iconImageView animation
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                // Animate the buttons from left to right
-                animateButtonsFromLeftToRight();
-            }
-        }, 300); // Delay the button animation by 300 milliseconds (adjust as needed)
     }
 
     private void animateTextViewAndIconToRight() {
         Log.d("MainActivity", "animateTextViewAndIconToRight - has started");
-        int translateDistance = dateTextView.getWidth();
+        int translateDistance = buttonLayout.getWidth();
         Animation animation = new TranslateAnimation(0, translateDistance, 0, 0);
-        animation.setDuration(300); // Adjust the duration to make the animation smoother
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
 
         animation.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
+                animateButtonsFromLeftToRight();
             }
 
             @Override
@@ -812,8 +934,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
     private void animateButtonsFromLeftToRight() {
         Log.d("MainActivity", "animateButtonsFromLeftToRight - has started");
-        Animation animation = new TranslateAnimation(-todayButton.getWidth(), 0, 0, 0);
-        animation.setDuration(300); // Adjust the duration to make the animation smoother
+        Animation animation = new TranslateAnimation(-buttonLayout.getWidth(), 0, 0, 0);
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
 
         todayButton.setVisibility(View.VISIBLE);
         yesterdayButton.setVisibility(View.VISIBLE);
@@ -844,6 +966,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
                 // Format the selected date using the SimpleDateFormat
                 formattedDate = dateFormat.format(selectedDate.getTime());
+                userData.setCrimeDate(formattedDate);
 
                 // Animate the buttons
                 animateButtonsToLeft();
@@ -1113,14 +1236,31 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         inputStream.close();
         return bitmap;
     }
+    private void crimeDetails() {
+        // Retrieve user ID from the intent or wherever you store it
+        final String userId = "1"; // Replace with the actual user ID
+        final String crime_person = enterPersonEditTexts.getText().toString();
+        final String crime_selectedDate = formattedDate;
+        final String crime_selectedTime = getSelectedTime();
+        final String crime_location = barangayTextInputLayouts.getText().toString();
+        final String crime_description = descriptionEditText.getText().toString();
 
+        // Save the selected crime type to the userData object
+        userData.setCrimePerson(crime_person);
+        userData.setCrimeDate(crime_selectedDate);
+        userData.setCrimeTime(crime_selectedTime);
+        userData.setCrimeLocation(crime_location);
+        userData.setCrimeDescription(crime_description);
+    }
     private void reportCrime() {
         // Retrieve user ID from the intent or wherever you store it
-        String userId = "1"; // Replace with the actual user ID
-        final String description = descriptionEditText.getText().toString();
-        final String selectedDate = formattedDate;
-        final String selectedTime = getSelectedTime();
-        final String location = barangayTextInputLayouts.getText().toString();
+        final String userId = "1"; // Replace with the actual user ID
+        final String crime_type = textViewValue.getText().toString();
+        final String crime_person = enterPersonEditTexts.getText().toString();
+        final String crime_selectedDate = formattedDate;
+        final String crime_selectedTime = getSelectedTime();
+        final String crime_location = barangayTextInputLayouts.getText().toString();
+        final String crime_description = descriptionEditText.getText().toString();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -1128,10 +1268,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                     // Create JSON object with crime data
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("userId", userId);
-                    jsonObject.put("description", description);
-                    jsonObject.put("date", selectedDate);
-                    jsonObject.put("time", selectedTime);
-                    jsonObject.put("location", location);
+                    jsonObject.put("description", crime_type);
+                    jsonObject.put("description", crime_person);
+                    jsonObject.put("date", crime_selectedDate);
+                    jsonObject.put("time", crime_selectedTime);
+                    jsonObject.put("location", crime_location);
+                    jsonObject.put("description", crime_description);
 
                     Log.d("MainActivity", "reportCrime - Data to be passed: " + jsonObject);
 
@@ -1173,7 +1315,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                         // Inside your Step2Fragment
                         Handler handler = new Handler(Looper.getMainLooper());
 
-// To run code on the UI thread, use the handler like this:
+                        // To run code on the UI thread, use the handler like this:
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -1286,7 +1428,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         requireActivity().finish();
         Log.d("MainActivity", "clearForm - Form Cleared");
     }
-
 
     // Rest of the code remains unchanged
     private void openImagePicker() {

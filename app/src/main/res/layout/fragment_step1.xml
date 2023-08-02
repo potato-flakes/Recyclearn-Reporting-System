@@ -168,7 +168,7 @@
         android:paddingTop="8dp"
         android:paddingEnd="25dp"
         android:paddingBottom="8dp"
-        android:text="Go Back"
+        android:text="Cancel Report"
         android:textColor="@color/black" />
 
 </LinearLayout>

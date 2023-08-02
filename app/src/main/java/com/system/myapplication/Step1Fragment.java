@@ -175,5 +175,4 @@ public class Step1Fragment extends Fragment {
         return fragment;
     }
 
-
 }
