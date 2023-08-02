@@ -14,5 +14,8 @@
     <style name="SlowIndeterminateProgressBar">
         <item name="android:indeterminateDuration">4000</item> <!-- Adjust the duration as needed (in milliseconds) -->
     </style>
-
+    <style name="CustomDialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:background">@drawable/dialog_background</item> <!-- Replace with your dialog background drawable -->
+    </style>
 </resources>

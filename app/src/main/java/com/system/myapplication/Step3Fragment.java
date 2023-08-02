@@ -36,6 +36,13 @@ public class Step3Fragment extends Fragment {
     private EditText emailEditText;
     private Button maleButton;
     private Button femaleButton;
+    private Button nextButton;
+    private UserData userData;
+
+    public void setUserData(UserData userData) {
+        this.userData = userData;
+    }
+
 
     public Step3Fragment() {
         // Required empty public constructor
@@ -53,6 +60,7 @@ public class Step3Fragment extends Fragment {
         firstNameEditText = view.findViewById(R.id.editTextFirstName);
         lastNameEditText = view.findViewById(R.id.editTextLastName);
         emailEditText = view.findViewById(R.id.editTextEmail);
+        nextButton = view.findViewById(R.id.nextButton);
 
         // Replace "your-server-url.com" with the actual URL of your server and PHP script
         String serverUrl = "http://192.168.1.37/recyclearn/report_user/get_user_details.php";
@@ -119,6 +127,22 @@ public class Step3Fragment extends Fragment {
             }
         });
 
+        // Inside Step3Fragment.java
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Validate the user input here if needed
+
+                // Save the user's input to the userData object
+                userData.setPersonalDetails(firstNameEditText.getText().toString() + " " + lastNameEditText.getText().toString());
+
+                // Show a success message
+                ((createReport_activity) requireActivity()).showFormComplete();
+
+                // Note: You can also choose to navigate to another fragment if there are more steps after Step3
+            }
+        });
+
 
     }
 
@@ -179,4 +203,5 @@ public class Step3Fragment extends Fragment {
             }
         }
     }
+
 }

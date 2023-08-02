@@ -2,6 +2,7 @@ package com.system.myapplication;
 
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 
@@ -102,7 +103,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private String formattedDate;
     private List<String> barangayOptions = new ArrayList<>();
     private List<String> imageUrls = new ArrayList<>();
-    private HashMap<String, String> barangaysMap;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
     private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
     private LinearLayout imageContainer;
@@ -126,7 +126,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private TextView timeLabel;
     private TextView amTextView;
     private TextView pmTextView;
-    private TextView text_view_progress;
     private TextView personNameLabel;
     private ImageView hourIncreaseButton;
     private ImageView hourDecreaseButton ;
@@ -145,11 +144,16 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private double phLatitude = 12.8797;
     private double phLongitude = 121.7740;
     private ProgressBar progressBar;
-    private ProgressBar userProgressBar;
     private GifImageView loadingImageView;
     private TextView gifTextView;
     private static final int RESULT_OK = Activity.RESULT_OK;
+    private UserData userData;
 
+    public void setUserData(UserData userData) {
+        this.userData = userData;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -182,9 +186,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         minuteDecreaseButton = view.findViewById(R.id.minuteDecreaseButton);
         barangayTextInputLayouts = view.findViewById(R.id.barangaySpinner);
         progressBar = view.findViewById(R.id.progressBar);
-        userProgressBar = view.findViewById(R.id.userProgressBar);
         locationImageView = view.findViewById(R.id.locationImageView);
-        text_view_progress = view.findViewById(R.id.text_view_progress);
         loadingImageView = view.findViewById(R.id.loadingImageView);
         gifTextView = view.findViewById(R.id.gifTextView);
         enterPersonNameLayout = view.findViewById(R.id.enterPersonNameLayout);
@@ -195,7 +197,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
         imageUrls = new ArrayList<>();
 
-
         mapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -204,21 +205,24 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
-        Button submitButton = view.findViewById(R.id.submitButton);
-        submitButton.setOnClickListener(new View.OnClickListener() {
+        Button nextButton = view.findViewById(R.id.nextButton);
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            // Inside the onClick() method of the "Next" button in Step2Fragment
             @Override
             public void onClick(View v) {
-                // Create an instance of Step2Fragment and set the arguments
-                Step3Fragment step3Fragment = new Step3Fragment();
+                // Save the user's input to the userData object
+                userData.setCrimeDetails("crimeDetailsEditText.getText().toString()");
 
-                // Set Step1Fragment as the target fragment for Step2Fragment
-                step3Fragment.setTargetFragment(Step2Fragment.this, 1);
-
-                // Navigate to Step2Fragment
-                ((createReport_activity) requireActivity()).navigateToNextFragment(step3Fragment);
-                Log.d("MainActivity", "Submit Button was clicked");
+                // Navigate to the next fragment (Step3Fragment)
+                ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
             }
+
         });
+        // Populate the UI elements with data from the userData object (if available)
+        if (userData != null) {
+            // For example, if you have an EditText for crime details:
+            textViewValue.setText(userData.getCrimeType());
+        }
 
         Button addImageButton = view.findViewById(R.id.addImageButton);
         addImageButton.setOnClickListener(new View.OnClickListener() {
@@ -352,7 +356,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 Log.d("MainActivity", "View Maps Button was clicked");
             }
         });
-
 
         // Get the current time
         Calendar currentTime = Calendar.getInstance();
@@ -532,18 +535,10 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
+              navigateToStep1Fragment();
             }
         });
 
-        // Get the value from the arguments and display it in the TextView
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            String valueFromStep1 = bundle.getString("selectedCrimeType");
-            if (valueFromStep1 != null) {
-                textViewValue.setText(valueFromStep1);
-            }
-        }
         // Find the Yes and No buttons
         yesButton = view.findViewById(R.id.yesButton);
         noButton = view.findViewById(R.id.noButton);
@@ -607,7 +602,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
+               navigateToStep1Fragment();
             }
         });
 
@@ -1447,18 +1442,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     }
     // Method to navigate back to Step1Fragment
     private void navigateToStep1Fragment() {
-        // Get the selected crime type from the TextView
-        String selectedCrimeType = textViewValue.getText().toString();
 
-        // Get the target fragment (Step1Fragment)
-        Fragment targetFragment = getTargetFragment();
-        if (targetFragment instanceof Step1Fragment) {
-            // Pass the selected crime type back to Step1Fragment
-            ((Step1Fragment) targetFragment).setSelectedCrimeType(selectedCrimeType);
-
-            // Navigate back to Step1Fragment
-            ((createReport_activity) requireActivity()).navigateToNextFragment(targetFragment);
-        }
-
+        // Navigate to the previous fragment (Step1Fragment)
+        ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
     }
 }

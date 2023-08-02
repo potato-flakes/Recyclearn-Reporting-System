@@ -1,86 +1,172 @@
 package com.system.myapplication;
 
-import android.content.Context;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 public class Step1Fragment extends Fragment {
 
     private RadioGroup crimeRadioGroup;
     private String selectedCrimeType;
-    private OnStepCompletionListener stepCompletionListener;
-    private int currentPage;
+    private TextInputLayout crimeRadioGroupLayout;
+    private View customErrorMessageView;
+    private Handler errorHandler = new Handler();
+    private boolean isErrorVisible = false;
+    private UserData userData;
+
+    public void setUserData(UserData userData) {
+        this.userData = userData;
+    }
 
     public Step1Fragment() {
         // Required empty public constructor
     }
 
     @Nullable
+    // Inside onCreateView method of Step1Fragment.java
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_step1, container, false);
-        // Find the RadioGroup and set the OnCheckedChangeListener
+
         crimeRadioGroup = view.findViewById(R.id.crimeRadioGroup);
+        crimeRadioGroupLayout = view.findViewById(R.id.crimeRadioGroupLayout);
+        customErrorMessageView = view.findViewById(R.id.customErrorMessage);
+        customErrorMessageView.setVisibility(View.GONE); // Hide it initially
+
+        // Populate the UI elements with data from the userData object (if available)
+        if (userData != null) {
+            String crimeType = userData.getCrimeType();
+            if (crimeType != null) {
+                for (int i = 0; i < crimeRadioGroup.getChildCount(); i++) {
+                    View radioView = crimeRadioGroup.getChildAt(i);
+                    if (radioView instanceof RadioButton) {
+                        RadioButton radioButton = (RadioButton) radioView;
+                        if (radioButton.getText().toString().equals(crimeType)) {
+                            radioButton.setChecked(true);
+                            selectedCrimeType = radioButton.getText().toString();
+                            break;
+                        }
+                    }
+                }
+            } else {
+                Log.e("Step1Fragment", "onCreateView - crimeType is null");
+            }
+        } else {
+            Log.e("Step1Fragment", "onCreateView - userData is null");
+        }
+
         crimeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 // Get the selected RadioButton's text
                 RadioButton selectedRadioButton = view.findViewById(checkedId);
                 selectedCrimeType = selectedRadioButton.getText().toString();
+
+                // Save the selected crime type to the userData object
+                userData.setCrimeType(selectedCrimeType);
+
+                // Hide the custom error message when a selection is made
+                hideErrorMessage();
             }
         });
-
 
         // Get the value from the EditText and pass it to Step2Fragment when the "Next" button is clicked
         Button nextButton = view.findViewById(R.id.nextButton);
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String value = selectedCrimeType;
-                // Create a Bundle to hold the value
-                Bundle bundle = new Bundle();
-                bundle.putString("selectedCrimeType", value);
+                // Check if a crime type is selected
+                if (selectedCrimeType == null) {
+                    // Show the custom error message above the RadioGroup
+                    crimeRadioGroupLayout.requestFocus();
 
-                // Create an instance of Step2Fragment and set the arguments
-                Step2Fragment step2Fragment = new Step2Fragment();
-                step2Fragment.setArguments(bundle);
+                    showErrorMessage();
+                    return; // Return without navigating to the next fragment
+                } else {
+                    hideErrorMessage();
+                }
+                // Save the user's input to the userData object
+                userData.setCrimeType(selectedCrimeType);
 
-                // Set Step1Fragment as the target fragment for Step2Fragment
-                step2Fragment.setTargetFragment(Step1Fragment.this, 1);
-
-                // Navigate to Step2Fragment
-                ((createReport_activity) requireActivity()).navigateToNextFragment(step2Fragment);
+                // Navigate to the next fragment (Step2Fragment)
+                ((createReport_activity) requireActivity()).navigateToNextFragment(new Step2Fragment());
             }
         });
 
         return view;
     }
 
-    // Method to receive the selected crime type from Step2Fragment
-    public void setSelectedCrimeType(String selectedCrimeType) {
-        this.selectedCrimeType = selectedCrimeType;
-        // Set the selected crime type to the appropriate RadioButton in the crimeRadioGroup
-        for (int i = 0; i < crimeRadioGroup.getChildCount(); i++) {
-            View view = crimeRadioGroup.getChildAt(i);
-            if (view instanceof RadioButton) {
-                RadioButton radioButton = (RadioButton) view;
-                if (radioButton.getText().toString().equals(selectedCrimeType)) {
-                    radioButton.setChecked(true);
-                    break;
+    private void showErrorMessage() {
+        if (!isErrorVisible) {
+            isErrorVisible = true;
+            customErrorMessageView.setVisibility(View.VISIBLE);
+            Animation fadeInAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_in);
+            customErrorMessageView.startAnimation(fadeInAnimation);
+
+            // Set a duration for the visibility of the error message
+            int errorMessageDuration = 3000; // 3 seconds
+            errorHandler.removeCallbacksAndMessages(null); // Cancel previous delayed runnable
+            errorHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    hideErrorMessage();
                 }
-            }
+            }, errorMessageDuration);
         }
     }
-    // Static method to create a new instance of the fragment and pass the currentPage value
+
+    private void hideErrorMessage() {
+        if (isErrorVisible) {
+            isErrorVisible = false;
+            Animation fadeOutAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_out);
+            customErrorMessageView.startAnimation(fadeOutAnimation);
+
+            // Wait for the animation to complete before setting the visibility to GONE
+            fadeOutAnimation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    customErrorMessageView.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+        }
+    }
+
+    private void cancelErrorMessage() {
+        isErrorVisible = false;
+        errorHandler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Cancel the error message handler when the view is destroyed
+        cancelErrorMessage();
+    }
+
     public static Step1Fragment newInstance(int currentPage) {
         Step1Fragment fragment = new Step1Fragment();
         Bundle args = new Bundle();
@@ -88,30 +174,6 @@ public class Step1Fragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        // Ensure that the hosting activity implements the OnStepCompletionListener
-        if (context instanceof OnStepCompletionListener) {
-            stepCompletionListener = (OnStepCompletionListener) context;
-        } else {
-            throw new ClassCastException(context.toString() + " must implement OnStepCompletionListener");
-        }
 
-        // Retrieve the currentPage value from the arguments
-        if (getArguments() != null) {
-            currentPage = getArguments().getInt("currentPage", 1);
-        }
-    }
-
-    // After the user has completed the input (e.g., when clicking "Next")
-    private void onStepCompleted() {
-        stepCompletionListener.onStepCompleted(currentPage, true); // currentPage should be the current step number
-    }
-
-    // When the user wants to go back (e.g., when clicking "Back")
-    private void onGoBack() {
-        stepCompletionListener.onStepCompleted(currentPage, false);
-    }
 
 }

@@ -1,8 +1,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".Step2Fragment">
 
@@ -22,17 +22,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
-                android:padding="10dp"
                 android:background="@drawable/selected_type_of_crime_background"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:padding="10dp">
 
                 <TextView
                     android:id="@+id/descriptionLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppinsmedium"
                     android:text="Type of crime: "
-                    android:textSize="14dp"
-                    android:fontFamily="@font/poppinsmedium"/>
+                    android:textSize="14dp" />
 
                 <TextView
                     android:id="@+id/textViewValue"
@@ -40,11 +40,11 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/crime_button_background"
                     android:fontFamily="@font/poppinsmedium"
-                    android:hint="Select a crime"
-                    android:textColor="@color/less_color"
-                    android:textSize="14dp"
                     android:gravity="center_vertical"
-                    android:paddingStart="25dp" />
+                    android:hint="Select a crime"
+                    android:paddingStart="25dp"
+                    android:textColor="@color/less_color"
+                    android:textSize="14dp" />
 
                 <View
                     android:layout_width="0dp"
@@ -54,7 +54,7 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/ic_description"/>
+                    android:src="@drawable/ic_description" />
 
             </LinearLayout>
 
@@ -63,8 +63,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="15dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -73,30 +73,30 @@
                     android:text="Help us with more info about the crime."
                     android:textSize="15dp" />
 
-        </LinearLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:src="@drawable/ic_identified"
-                    android:contentDescription="Date Icon"/>
+                    android:contentDescription="Date Icon"
+                    android:src="@drawable/ic_identified" />
 
                 <TextView
                     android:id="@+id/personLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Do you know the person?"
-                    android:textSize="15sp"
                     android:layout_marginStart="2dp"
-                    android:fontFamily="@font/poppinsmedium"/>
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Do you know the person?"
+                    android:textSize="15sp" />
 
             </LinearLayout>
 
@@ -104,30 +104,30 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
-                android:orientation="horizontal"
+                android:background="@drawable/button_background"
                 android:gravity="center_vertical"
-                android:padding="4dp"
-                android:background="@drawable/button_background">
+                android:orientation="horizontal"
+                android:padding="4dp">
 
                 <Button
                     android:id="@+id/yesButton"
                     android:layout_width="0dp"
                     android:layout_height="40dp"
                     android:layout_weight="1"
-                    android:text="Yes"
-                    android:textColor="@color/colorPrimary"
                     android:enabled="true"
-                    android:onClick="onYesButtonClick" />
+                    android:onClick="onYesButtonClick"
+                    android:text="Yes"
+                    android:textColor="@color/colorPrimary" />
 
                 <Button
                     android:id="@+id/noButton"
                     android:layout_width="0dp"
                     android:layout_height="40dp"
                     android:layout_weight="1"
-                    android:text="No"
-                    android:textColor="@color/colorPrimary"
                     android:enabled="true"
-                    android:onClick="onNoButtonClick" />
+                    android:onClick="onNoButtonClick"
+                    android:text="No"
+                    android:textColor="@color/colorPrimary" />
 
             </LinearLayout>
 
@@ -135,35 +135,35 @@
                 android:id="@+id/animatedLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:gravity="center_vertical"
+                android:orientation="vertical"
                 android:visibility="visible"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/enterPersonEditTextNameLayout">
+                app:layout_constraintBottom_toTopOf="@id/enterPersonEditTextNameLayout"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
                     android:id="@+id/enterPersonNameLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <ImageView
                         android:id="@+id/enterPersonNameImageView"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_person"
-                        android:contentDescription="Date Icon"/>
+                        android:contentDescription="Date Icon"
+                        android:src="@drawable/ic_person" />
 
                     <TextView
                         android:id="@+id/personNameLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Enter person name"
-                        android:textSize="15sp"
                         android:layout_marginStart="2dp"
-                        android:fontFamily="@font/poppinsmedium"/>
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="Enter person name"
+                        android:textSize="15sp" />
 
                 </LinearLayout>
 
@@ -172,19 +172,19 @@
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
                     android:layout_marginBottom="10dp"
-                    android:orientation="horizontal"
+                    android:background="@drawable/button_background"
                     android:gravity="center_vertical"
-                    android:background="@drawable/button_background">
+                    android:orientation="horizontal">
 
                     <EditText
                         android:id="@+id/enterPersonEditTexts"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
                         android:fontFamily="@font/poppinsmedium"
-                        android:paddingStart="10dp"
-                        android:textSize="12.5dp"
                         android:hint="Enter person name"
-                        android:background="@android:color/transparent" />
+                        android:paddingStart="10dp"
+                        android:textSize="12.5dp" />
 
                 </LinearLayout>
 
@@ -193,32 +193,32 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginBottom="10dp"
+                android:orientation="vertical"
                 app:layout_constraintTop_toBottomOf="@id/enterPersonNameLayout">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_calendar"
-                        android:contentDescription="Date Icon"/>
+                        android:contentDescription="Date Icon"
+                        android:src="@drawable/ic_calendar" />
 
                     <TextView
                         android:id="@+id/dateLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="When it happened?"
-                        android:textSize="15sp"
                         android:layout_marginStart="2dp"
-                        android:fontFamily="@font/poppinsmedium"/>
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="When it happened?"
+                        android:textSize="15sp" />
 
                 </LinearLayout>
 
@@ -230,47 +230,47 @@
                         android:id="@+id/buttonLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
                         android:gravity="center"
+                        android:orientation="horizontal"
                         android:padding="2dp">
 
                         <Button
                             android:id="@+id/todayButton"
                             android:layout_width="0dp"
                             android:layout_height="60dp"
-                            android:layout_weight="1"
                             android:layout_marginRight="5dp"
-                            android:text="Today"
-                            android:background="@drawable/button_background" />
+                            android:layout_weight="1"
+                            android:background="@drawable/button_background"
+                            android:text="Today" />
 
                         <Button
                             android:id="@+id/yesterdayButton"
                             android:layout_width="0dp"
                             android:layout_height="60dp"
-                            android:layout_weight="1"
                             android:layout_marginRight="5dp"
-                            android:text="Yesterday"
-                            android:background="@drawable/button_background" />
+                            android:layout_weight="1"
+                            android:background="@drawable/button_background"
+                            android:text="Yesterday" />
 
                         <Button
                             android:id="@+id/selectDateButton"
                             android:layout_width="0dp"
                             android:layout_height="60dp"
                             android:layout_weight="1.5"
-                            android:text="Select Date"
-                            android:background="@drawable/button_background" />
+                            android:background="@drawable/button_background"
+                            android:text="Select Date" />
                     </LinearLayout>
 
                     <TextView
                         android:id="@+id/dateTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="60dp"
-                        android:textSize="30sp"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:textColor="@color/black"
-                        android:gravity="center"
-                        android:layout_toStartOf="@+id/iconImageView"
                         android:layout_alignParentStart="true"
+                        android:layout_toStartOf="@+id/iconImageView"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
+                        android:textColor="@color/black"
+                        android:textSize="30sp"
                         android:visibility="gone" />
 
                     <ImageView
@@ -278,11 +278,11 @@
                         android:layout_width="60dp"
                         android:layout_height="60dp"
                         android:layout_alignParentEnd="true"
-                        android:src="@drawable/back_icon"
+                        android:clickable="true"
                         android:foregroundGravity="center"
                         android:padding="10dp"
-                        android:visibility="gone"
-                        android:clickable="true" />
+                        android:src="@drawable/back_icon"
+                        android:visibility="gone" />
                 </RelativeLayout>
 
             </LinearLayout>
@@ -290,31 +290,31 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:orientation="vertical"
-                android:layout_marginBottom="10dp">
+                android:layout_marginBottom="10dp"
+                android:orientation="vertical">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_clock"
-                        android:contentDescription="Time Icon"/>
+                        android:contentDescription="Time Icon"
+                        android:src="@drawable/ic_clock" />
 
                     <TextView
                         android:id="@+id/timeLabel"
-                        android:fontFamily="@font/poppinsmedium"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="2dp"
+                        android:fontFamily="@font/poppinsmedium"
                         android:text="What time it happened?"
-                        android:textSize="15sp"
-                        android:layout_marginStart="2dp"/>
+                        android:textSize="15sp" />
 
                 </LinearLayout>
 
@@ -335,7 +335,6 @@
 
                     <EditText
                         android:id="@+id/hourEditText"
-                        android:gravity="center"
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
                         android:layout_above="@id/hourDecreaseButton"
@@ -344,6 +343,7 @@
                         android:layout_marginStart="50dp"
                         android:background="@null"
                         android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
                         android:inputType="number"
                         android:text="12"
                         android:textSize="30sp" />
@@ -359,25 +359,25 @@
 
                     <TextView
                         android:id="@+id/hourLabel"
-                        android:gravity="center"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
                         android:layout_alignParentTop="true"
                         android:layout_alignParentBottom="true"
+                        android:layout_marginLeft="10dp"
                         android:layout_toEndOf="@+id/hourEditText"
+                        android:gravity="center"
                         android:text="h"
                         android:textSize="18sp" />
 
                     <EditText
                         android:id="@+id/colon"
-                        android:fontFamily="@font/poppinsmedium"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
                         android:layout_toStartOf="@+id/minuteEditText"
                         android:layout_toEndOf="@+id/hourLabel"
                         android:background="@null"
+                        android:fontFamily="@font/poppinsmedium"
                         android:gravity="center"
                         android:inputType="number"
                         android:text=":"
@@ -394,28 +394,28 @@
 
                     <EditText
                         android:id="@+id/minuteEditText"
-                        android:gravity="center"
-                        android:fontFamily="@font/poppinsmedium"
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
                         android:layout_above="@+id/minuteDecreaseButton"
                         android:layout_below="@+id/minuteIncreaseButton"
                         android:layout_toStartOf="@+id/minutelabel"
                         android:background="@null"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:gravity="center"
                         android:inputType="number"
                         android:text="00"
                         android:textSize="30sp" />
 
                     <TextView
                         android:id="@+id/minutelabel"
-                        android:gravity="center"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="20dp"
                         android:layout_alignParentTop="true"
                         android:layout_alignParentBottom="true"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="20dp"
                         android:layout_toStartOf="@+id/amPmSpinner"
+                        android:gravity="center"
                         android:text="m"
                         android:textSize="18sp" />
 
@@ -434,33 +434,33 @@
                         android:layout_height="match_parent"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        android:orientation="vertical"
-                        android:gravity="center">
+                        android:gravity="center"
+                        android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/amTextView"
-                            android:fontFamily="@font/poppinsmedium"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="AM"
-                            android:textSize="18sp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:layout_marginBottom="10dp"/>
+                            android:layout_marginBottom="10dp"
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="AM"
+                            android:textSize="18sp" />
 
                         <TextView
                             android:id="@+id/pmTextView"
-                            android:fontFamily="@font/poppinsmedium"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="PM"
-                            android:textSize="18sp"
+                            android:layout_centerVertical="true"
                             android:layout_toStartOf="@+id/amTextView"
-                            android:layout_centerVertical="true" />
+                            android:fontFamily="@font/poppinsmedium"
+                            android:text="PM"
+                            android:textSize="18sp" />
                     </LinearLayout>
                 </RelativeLayout>
 
-        </LinearLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -472,31 +472,31 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_location"
-                        android:contentDescription="Location Icon"/>
+                        android:contentDescription="Location Icon"
+                        android:src="@drawable/ic_location" />
 
                     <TextView
                         android:id="@+id/locationLabel"
-                        android:fontFamily="@font/poppinsmedium"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="2dp"
+                        android:fontFamily="@font/poppinsmedium"
                         android:text="Where it happened?"
-                        android:textSize="15sp"
-                        android:layout_marginStart="2dp"/>
+                        android:textSize="15sp" />
 
                 </LinearLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/barangayTextInputLayout"
-                    android:background="@drawable/spinner_border"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
+                    android:background="@drawable/spinner_border"
                     android:gravity="center_vertical">
 
                     <RelativeLayout
@@ -508,10 +508,10 @@
                             android:id="@+id/barangaySpinner"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppinsmedium"
                             android:background="@drawable/button_selector"
-                            android:hint="Select a barangay"
+                            android:fontFamily="@font/poppinsmedium"
                             android:gravity="center_vertical"
+                            android:hint="Select a barangay"
                             android:paddingStart="18dp"
                             android:paddingEnd="8dp" />
 
@@ -527,10 +527,10 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:layout_marginEnd="10dp"
                             android:layout_centerVertical="true"
-                            android:src="@drawable/ic_maps"
-                            android:padding="8dp" />
+                            android:layout_marginEnd="10dp"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_maps" />
 
                     </RelativeLayout>
 
@@ -543,8 +543,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="30dp"
-                android:layout_marginRight="30dp"
                 android:layout_marginTop="5dp"
+                android:layout_marginRight="30dp"
                 android:layout_marginBottom="5dp"
                 android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -578,35 +578,36 @@
                 android:id="@+id/setLocationLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="10dp">
+                android:layout_marginBottom="10dp"
+                android:orientation="vertical">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingStart="10dp"
-                    android:paddingBottom="10dp"
                     android:layout_marginBottom="10dp"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:paddingStart="10dp"
+                    android:paddingBottom="10dp">
 
                     <TextView
                         android:id="@+id/setLocationTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Set Current Location"
-                        android:textSize="15sp"
                         android:layout_marginStart="2dp"
-                        android:fontFamily="@font/poppinsmedium"/>
+                        android:fontFamily="@font/poppinsmedium"
+                        android:text="Set Current Location"
+                        android:textSize="15sp" />
+
                     <View
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
+
                     <Switch
                         android:id="@+id/locationSwitch"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        />
+                        android:layout_height="wrap_content" />
 
                 </LinearLayout>
             </LinearLayout>
@@ -614,8 +615,8 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
-                app:cardCornerRadius="10dp"
                 android:layout_marginBottom="10dp"
+                app:cardCornerRadius="10dp"
                 app:cardElevation="4dp">
 
                 <RelativeLayout
@@ -625,22 +626,22 @@
                     <FrameLayout
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:elevation="8dp"
-                        android:layout_gravity="center"
+                        android:layout_alignParentStart="true"
                         android:layout_alignParentTop="true"
-                        android:layout_alignParentBottom="true"
                         android:layout_alignParentEnd="true"
-                        android:layout_alignParentStart="true">
+                        android:layout_alignParentBottom="true"
+                        android:layout_gravity="center"
+                        android:elevation="8dp">
 
                         <pl.droidsonroids.gif.GifImageView
                             android:id="@+id/loadingImageView"
                             android:layout_width="100dp"
                             android:layout_height="100dp"
-                            android:layout_gravity="center"
-                            android:layout_alignParentTop="true"
-                            android:layout_alignParentBottom="true"
-                            android:layout_alignParentEnd="true"
                             android:layout_alignParentStart="true"
+                            android:layout_alignParentTop="true"
+                            android:layout_alignParentEnd="true"
+                            android:layout_alignParentBottom="true"
+                            android:layout_gravity="center"
                             android:src="@drawable/loading_gif"
                             android:visibility="gone" />
 
@@ -651,10 +652,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:elevation="100dp"
-                        android:textColor="#C10000"
-                        android:textSize="15dp"
                         android:fontFamily="@font/poppinsmedium"
                         android:text="Getting your location..."
+                        android:textColor="#C10000"
+                        android:textSize="15dp"
                         android:visibility="gone" />
 
                     <org.osmdroid.views.MapView
@@ -665,31 +666,31 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="40dp"
-                        android:orientation="horizontal"
                         android:layout_alignParentBottom="true"
-                        android:background="#80000000">
+                        android:background="#80000000"
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/locationTextView"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10dp"
-                            android:padding="10dp"
                             android:fontFamily="@font/poppinsmedium"
-                            android:text="Your Current Location" />
+                            android:padding="10dp"
+                            android:text="Your Current Location"
+                            android:textColor="#FFFFFF"
+                            android:textSize="10dp" />
 
                         <Button
                             android:id="@+id/viewMapsButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@android:color/transparent"
-                            android:textColor="#FFFFFF"
-                            android:textSize="18dp"
                             android:fontFamily="@font/poppinsmedium"
+                            android:paddingLeft="30dp"
                             android:text=">"
-                            android:paddingLeft="30dp" />
+                            android:textColor="#FFFFFF"
+                            android:textSize="18dp" />
 
                     </LinearLayout>
 
@@ -708,57 +709,57 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal" />
 
-        </HorizontalScrollView>
+            </HorizontalScrollView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_describe"
-                    android:contentDescription="Location Icon"/>
+                    android:contentDescription="Location Icon"
+                    android:src="@drawable/ic_describe" />
 
                 <TextView
                     android:id="@+id/descriptionTextView"
-                    android:fontFamily="@font/poppinsmedium"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:fontFamily="@font/poppinsmedium"
                     android:text="Can you shortly describe what happened?"
-                    android:textSize="15sp"
-                    android:layout_marginStart="2dp"/>
+                    android:textSize="15sp" />
 
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="vertical">
 
                 <EditText
                     android:id="@+id/descriptionEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="15sp"
+                    android:gravity="start|top"
                     android:hint="Shortly describe what happened"
                     android:inputType="textMultiLine"
-                    android:minLines="4"
                     android:maxLines="10"
-                    android:gravity="start|top"
-                    android:padding="10dp" />
+                    android:minLines="4"
+                    android:padding="10dp"
+                    android:textSize="15sp" />
 
                 <Button
                     android:id="@+id/autoGenerateButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Auto Generate"
-                    android:onClick="onAutoGenerateClick" />
+                    android:onClick="onAutoGenerateClick"
+                    android:text="Auto Generate" />
 
             </LinearLayout>
 
@@ -769,26 +770,26 @@
                 android:text="Add Image" />
 
             <Button
-                android:id="@+id/submitButton"
+                android:id="@+id/nextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
                 android:background="@drawable/button_rounded_background"
-                android:text="Next" />
+                android:text="Next"
+                android:textColor="@color/white" />
 
             <Button
                 android:id="@+id/backButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Go Back to Step 1"
-                android:textColor="@color/black"
-                android:background="@drawable/transparent_button_background"
                 android:layout_gravity="center_horizontal"
+                android:background="@drawable/transparent_button_background"
+                android:fontFamily="@font/poppinsmedium"
                 android:paddingStart="25dp"
-                android:paddingEnd="25dp"
                 android:paddingTop="8dp"
+                android:paddingEnd="25dp"
                 android:paddingBottom="8dp"
-                android:fontFamily="@font/poppinsmedium" />
+                android:text="Go Back to Step 1"
+                android:textColor="@color/black" />
 
         </LinearLayout>
 
