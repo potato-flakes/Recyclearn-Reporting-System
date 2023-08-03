@@ -6,7 +6,10 @@ public class UserData {
     private String crimePerson;
     private String crimeDate;
     private String crimeTime;
+    private int crimeHour = -1;
+    private int crimeMinute = -1;
     private String crimeLocation;
+    private String crimeTimeIndication;
 
     // Create getters and setters for each field
 
@@ -47,6 +50,28 @@ public class UserData {
 
     public void setCrimeTime(String crimeTime) {
         this.crimeTime = crimeTime;
+    }
+
+    public int getCrimeHour() {
+        return crimeHour;
+    }
+
+    public void setCrimeHour(int crimeHour) {
+        this.crimeHour = crimeHour;
+    }
+    public int getCrimeMinute() {
+        return crimeMinute;
+    }
+
+    public void setCrimeMinute(int crimeMinute) {
+        this.crimeMinute = crimeMinute;
+    }
+    public String getCrimeTimeIndication() {
+        return crimeTimeIndication;
+    }
+
+    public void setCrimeTimeIndication(String crimeTimeIndication) {
+        this.crimeTimeIndication = crimeTimeIndication;
     }
     public String getCrimeLocation() {
         return crimeLocation;

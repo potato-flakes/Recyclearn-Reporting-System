@@ -12,6 +12,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.os.Looper;
+import android.text.InputFilter;
+import android.text.method.DigitsKeyListener;
+import android.text.method.NumberKeyListener;
 import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -156,6 +159,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     public void setUserData(UserData userData) {
         this.userData = userData;
     }
+    int hourOfDay;
+    int prmyClr;
 
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
@@ -169,7 +174,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         yesterdayButton = view.findViewById(R.id.yesterdayButton);
         selectDateButton = view.findViewById(R.id.selectDateButton);
         timeButton = view.findViewById(R.id.timeButton);
-        hourEditText = view.findViewById(R.id.hourEditText);
         imageContainer = view.findViewById(R.id.imageLayout);
         mapView = view.findViewById(R.id.mainMapView);
         mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
@@ -200,6 +204,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         enterPersonEditTexts = view.findViewById(R.id.enterPersonEditTexts);
         animatedLayout = view.findViewById(R.id.animatedLayout);
         buttonLayout = view.findViewById(R.id.buttonLayout);
+        prmyClr = ContextCompat.getColor(requireContext(), R.color.colorPrimary);
 
         imageUrls = new ArrayList<>();
 
@@ -217,7 +222,84 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             if (crimeDate != null) {
                 // Update the date buttons based on the stored date
                 updateDateButtons(crimeDate);
+            } else {
+                // Set the selected state for the buttons
+                todayButton.setSelected(true);
+                yesterdayButton.setSelected(false);
+                selectDateButton.setSelected(false);
+
+                // Set the text colors and backgrounds for the buttons
+                todayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+                yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+
             }
+            int crimeHour = userData.getCrimeHour();
+            Log.d("MainActivity", "Current Hour is: " + crimeHour);
+            if (crimeHour >= 0) {
+                // Time is set, you can use the `crimeHour` value here
+                int storedCrimeHour = crimeHour; // Get the hour part
+                hourEditText.setText(String.valueOf(storedCrimeHour));
+            } else {
+                // Get the current time
+                Calendar currentTime = Calendar.getInstance();
+                hourOfDay = currentTime.get(Calendar.HOUR_OF_DAY);
+
+                // Convert 24-hour format to 12-hour format
+                int hour12Format = hourOfDay % 12;
+                if (hour12Format == 0) {
+                    hour12Format = 12; // 0 should be displayed as 12 in 12-hour format
+                }
+
+                // Set the current time to the EditText fields
+                hourEditText.setText(String.valueOf(hour12Format));
+
+                Log.d("MainActivity", "Today Button was clicked");
+                Log.d("MainActivity", "Current Hour is: " + hourEditText.getText().toString());
+
+                // Set the AM/PM states based on the current hour
+                if (hourOfDay >= 12) {
+                    // PM selected
+                    amTextView.setTextColor(Color.GRAY);
+                    pmTextView.setTextColor(prmyClr);
+                } else {
+                    // AM selected
+                    amTextView.setTextColor(prmyClr);
+                    pmTextView.setTextColor(Color.GRAY);
+                }
+            }
+
+            int crimeMinute = userData.getCrimeMinute();
+            if (crimeMinute >= 0) {
+                // Minute is set, you can use the `crimeMinute` value here
+                int storedCrimeMinute = crimeMinute; // Get the minute part
+                minuteEditText.setText(String.format("%02d", storedCrimeMinute));
+            } else {
+                // Get the current time
+                Calendar currentTime = Calendar.getInstance();
+                int minuteOfDay = currentTime.get(Calendar.MINUTE);
+
+                // Set the current minute to the EditText field
+                minuteEditText.setText(String.format("%02d", minuteOfDay));
+            }
+
+            String storedCrimeTimeIndication = userData.getCrimeTimeIndication();
+            if (storedCrimeTimeIndication != null) {
+                if (storedCrimeTimeIndication == "PM") {
+                    // PM selected
+                    amTextView.setTextColor(Color.GRAY);
+                    pmTextView.setTextColor(prmyClr);
+                } else {
+                    // AM selected
+                    amTextView.setTextColor(prmyClr);
+                    pmTextView.setTextColor(Color.GRAY);
+                }
+            }
+
         } else {
             Log.e("Step1Fragment", "onCreateView - userData is null");
         }
@@ -238,7 +320,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             public void onClick(View v) {
                 // Save the user's input to the userData object
                 userData.setCrimePerson(enterPersonEditTexts.getText().toString());
-
+                getSelectedTime();
                 // Navigate to the next fragment (Step3Fragment)
                 ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
             }
@@ -363,6 +445,24 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         // Find the ImageView by its ID
         ImageView iconImageView = view.findViewById(R.id.iconImageView);
 
+        // Find your hour and minute EditText fields by their IDs
+        EditText hourEditText = view.findViewById(R.id.hourEditText);
+        EditText minuteEditText = view.findViewById(R.id.minuteEditText);
+
+        // Set the maximum length for the hour and minute EditText fields
+        int maxDigits = 2; // Limit to 2 digits
+        hourEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxDigits)});
+        minuteEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxDigits)});
+
+        // Set an InputFilter to limit the hour EditText to the range from 1 to 12
+        hourEditText.setFilters(new InputFilter[]{
+                new InputFilterMinMax("1", "12")
+        });
+
+        // Set an InputFilter to limit the minute EditText to the range from 0 to 59
+        minuteEditText.setFilters(new InputFilter[]{
+                new InputFilterMinMax("0", "59")
+        });
         // Set the click listener for the ImageView
         iconImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -379,37 +479,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 Log.d("MainActivity", "View Maps Button was clicked");
             }
         });
-
-        // Get the current time
-        Calendar currentTime = Calendar.getInstance();
-        int hourOfDay = currentTime.get(Calendar.HOUR_OF_DAY);
-        int minute = currentTime.get(Calendar.MINUTE);
-
-// Convert 24-hour format to 12-hour format
-        int hour12Format = hourOfDay % 12;
-        if (hour12Format == 0) {
-            hour12Format = 12; // 0 should be displayed as 12 in 12-hour format
-        }
-
-// Set the current time to the EditText fields
-        hourEditText.setText(String.valueOf(hour12Format));
-        minuteEditText.setText(String.format("%02d", minute));
-
-        Log.d("MainActivity", "Today Button was clicked");
-        Log.d("MainActivity", "Current Hour is: " + hourEditText);
-        Log.d("MainActivity", "Current Minute is: " + minuteEditText);
-
-        int prmyClr = ContextCompat.getColor(requireContext(), R.color.colorPrimary);
-        // Set the click listeners for AM and PM TextViews
-        if (hourOfDay >= 12) {
-            // PM selected
-            amTextView.setTextColor(Color.GRAY);
-            pmTextView.setTextColor(prmyClr);
-        } else {
-            // AM selected
-            amTextView.setTextColor(prmyClr);
-            pmTextView.setTextColor(Color.GRAY);
-        }
 
         hourIncreaseButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -629,7 +698,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               navigateToStep1Fragment();
+                getSelectedTime();
+                navigateToStep1Fragment();
             }
         });
 
@@ -702,7 +772,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
                 selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
 
-                animateButtonsToLeft();
+                showTextViewNoAnimation(crimeDate);
             }
         }
     }
@@ -831,16 +901,27 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         int hour = Integer.parseInt(hourEditText.getText().toString());
         int minute = Integer.parseInt(minuteEditText.getText().toString());
         String time = String.format("%02d:%02d", hour, minute);
-        if (pmTextView.getCurrentTextColor() == Color.BLACK) {
+        String timeIndication;
+        if (pmTextView.getCurrentTextColor() == prmyClr) {
             // PM selected
             time += " PM";
+            timeIndication = "PM";
         } else {
             // AM selected
             time += " AM";
+            timeIndication = "AM";
         }
-        Log.d("MainActivity", "getSelectedTime - Selected Time :" + time);
+        Log.d("MainActivity", "getSelectedTime - Selected Time: " + time);
+        Log.d("MainActivity", "getSelectedTime - Selected Hour: " + hour);
+
+        // Update the UserData object with the selected time
+        userData.setCrimeHour(hour);
+        userData.setCrimeMinute(minute);
+        userData.setCrimeTimeIndication(timeIndication);
+
         return time;
     }
+
     private void animateButtonsToLeft() {
         Log.d("MainActivity", "animateButtonsToLeft - has started");
 
@@ -978,6 +1059,25 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         }, year, month, dayOfMonth);
 
         datePickerDialog.show();
+    }
+
+    private void showTextViewNoAnimation(String date) {
+        Log.d("MainActivity", "showTextViewFromRight - has started");
+        // Set the text for the TextView
+        if (userData != null){
+            String crimeDate = userData.getCrimeDate();
+            if (crimeDate != null){
+                date = userData.getCrimeDate();
+            }
+        }
+        dateTextView.setText(date);
+
+        // Update the visibility of the TextView
+        dateTextView.setVisibility(View.VISIBLE);
+        iconImageView.setVisibility(View.VISIBLE);
+        todayButton.setVisibility(View.GONE);
+        yesterdayButton.setVisibility(View.GONE);
+        selectDateButton.setVisibility(View.GONE);
     }
 
     private void setLocation() {
