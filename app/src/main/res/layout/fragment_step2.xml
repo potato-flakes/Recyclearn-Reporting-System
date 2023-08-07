@@ -597,7 +597,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="2dp"
                         android:fontFamily="@font/poppinsmedium"
-                        android:text="Set Current Location"
+                        android:text="Use Current Location"
                         android:textSize="15sp" />
 
                     <View

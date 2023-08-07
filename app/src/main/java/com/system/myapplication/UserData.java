@@ -3,6 +3,7 @@ package com.system.myapplication;
 public class UserData {
     private String crimeType;
     private boolean isYesButtonSelected = true;
+    private boolean locationEnabled;
     private String crimePerson;
     private String crimeDate;
     private String crimeTime;
@@ -76,11 +77,11 @@ public class UserData {
     public void setCrimeTimeIndication(String crimeTimeIndication) {
         this.crimeTimeIndication = crimeTimeIndication;
     }
-    public String getCrimeLocation() {
+    public String getCrimeExactLocation() {
         return crimeLocation;
     }
 
-    public void setCrimeLocation(String crimeLocation) {
+    public void setCrimeExactLocation(String crimeLocation) {
         this.crimeLocation = crimeLocation;
     }
     public String getCrimeDescription() {
@@ -97,6 +98,13 @@ public class UserData {
     public void setSelectedBarangay(String selectedBarangay) {
 
         this.selectedBarangay = selectedBarangay;
+    }
+    public boolean isLocationEnabled() {
+        return locationEnabled;
+    }
+
+    public void setLocationEnabled(boolean locationEnabled) {
+        this.locationEnabled = locationEnabled;
     }
 
     public double getCrimeLatitude() {

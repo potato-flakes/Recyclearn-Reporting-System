@@ -1,7 +1,6 @@
 package com.system.myapplication;
 
 public interface LocationSelectionListener {
-    void onLocationSelected(double retrievedLatitude, double retrievedLongitude);
+    void handleLocation(double passLatitude, double passLongitude);
+    boolean isLocationSet();
 }
-
-

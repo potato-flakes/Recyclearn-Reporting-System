@@ -294,16 +294,16 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
     private void performSave() {
 
         // Retrieve the updated latitude and longitude values
-        double retrievedLatitude = latitude;
-        double retrievedLongitude = longitude;
+        double passLatitude = latitude;
+        double passLongitude = longitude;
         // Perform validation to check if the location is within Lubao, Pampanga
-        if (isLocationWithinLubao(retrievedLatitude, retrievedLongitude)) {
+        if (isLocationWithinLubao(passLatitude, passLongitude)) {
             // Notify the listener with the updated location
         // Notify the listener with the updated location
         if (locationSelectionListener != null) {
-            locationSelectionListener.onLocationSelected(retrievedLatitude, retrievedLongitude);
-            Log.e("LocationBottomSheetFragment", "Updated Latitudes: " + retrievedLatitude);
-            Log.e("LocationBottomSheetFragment", "Updated Longitudes: " + retrievedLongitude);
+            locationSelectionListener.handleLocation(passLatitude, passLongitude);
+            Log.e("LocationBottomSheetFragment", "Updated Latitudes: " + passLatitude);
+            Log.e("LocationBottomSheetFragment", "Updated Longitudes: " + passLongitude);
             dismiss();
         }
         } else {
