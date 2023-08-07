@@ -104,10 +104,10 @@ import pl.droidsonroids.gif.GifImageView;
 public class Step2Fragment extends Fragment implements LocationSelectionListener {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
-    private TextView textViewValue;
     private String formattedDate;
     private List<String> barangayOptions = new ArrayList<>();
     private List<String> imageUrls = new ArrayList<>();
+    private static final int RESULT_OK = Activity.RESULT_OK;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
     private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
     private LinearLayout imageContainer;
@@ -124,8 +124,14 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private Button barangayTextInputLayouts;
     private Button yesButton;
     private Button noButton;
+    private Button backButton;
+    private Button addImageButton;
+    private Button nextButton;
     private double latitude;
     private double longitude;
+    double setLatitude;
+    double setLongitude;
+    private TextView textViewValue;
     private TextView locationTextView;
     private TextView dateTextView;
     private TextView timeLabel;
@@ -134,7 +140,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private TextView personNameLabel;
     private TextView gifTextView;
     private ImageView hourIncreaseButton;
-    private ImageView hourDecreaseButton ;
+    private ImageView hourDecreaseButton;
     private ImageView minuteIncreaseButton;
     private ImageView minuteDecreaseButton;
     private ImageView iconImageView;
@@ -147,20 +153,21 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private boolean isLocationSet;
     private Marker userMarker;
     private Switch setLocationButton;
-    private double phLatitude = 12.8797;
-    private double phLongitude = 121.7740;
     private ProgressBar progressBar;
     private GifImageView loadingImageView;
-
-    private static final int RESULT_OK = Activity.RESULT_OK;
     private UserData userData;
     private LinearLayout animatedLayout;
     private RelativeLayout buttonLayout;
+    private Handler handler = new Handler();
+
+    int hourOfDay;
+    int prmyClr;
+    double phLatitude = 12.8797;
+    double phLongitude = 121.7740;
+    double zoomLevel;
     public void setUserData(UserData userData) {
         this.userData = userData;
     }
-    int hourOfDay;
-    int prmyClr;
 
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
@@ -205,163 +212,81 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         animatedLayout = view.findViewById(R.id.animatedLayout);
         buttonLayout = view.findViewById(R.id.buttonLayout);
         prmyClr = ContextCompat.getColor(requireContext(), R.color.colorPrimary);
+        backButton = view.findViewById(R.id.backButton);
+        addImageButton = view.findViewById(R.id.addImageButton);
+        nextButton = view.findViewById(R.id.nextButton);
 
-        imageUrls = new ArrayList<>();
-
-        // Populate the UI elements with data from the userData object (if available)
-        if (userData != null) {
-            String crimeType = userData.getCrimeType();
-           if (crimeType != null){
-               textViewValue.setText(userData.getCrimeType());
-           }
-            String person = userData.getCrimePerson();
-           if (person != null){
-               enterPersonEditTexts.setText(userData.getCrimePerson());
-            }
-            String crimeDate = userData.getCrimeDate();
-            if (crimeDate != null) {
-                // Update the date buttons based on the stored date
-                updateDateButtons(crimeDate);
-            } else {
-                // Set the selected state for the buttons
-                todayButton.setSelected(true);
-                yesterdayButton.setSelected(false);
-                selectDateButton.setSelected(false);
-
-                // Set the text colors and backgrounds for the buttons
-                todayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
-                yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-                selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-
-                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
-                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-
-            }
-            int crimeHour = userData.getCrimeHour();
-            Log.d("MainActivity", "Current Hour is: " + crimeHour);
-            if (crimeHour >= 0) {
-                // Time is set, you can use the `crimeHour` value here
-                int storedCrimeHour = crimeHour; // Get the hour part
-                hourEditText.setText(String.valueOf(storedCrimeHour));
-            } else {
-                // Get the current time
-                Calendar currentTime = Calendar.getInstance();
-                hourOfDay = currentTime.get(Calendar.HOUR_OF_DAY);
-
-                // Convert 24-hour format to 12-hour format
-                int hour12Format = hourOfDay % 12;
-                if (hour12Format == 0) {
-                    hour12Format = 12; // 0 should be displayed as 12 in 12-hour format
-                }
-
-                // Set the current time to the EditText fields
-                hourEditText.setText(String.valueOf(hour12Format));
-
-                Log.d("MainActivity", "Today Button was clicked");
-                Log.d("MainActivity", "Current Hour is: " + hourEditText.getText().toString());
-
-                // Set the AM/PM states based on the current hour
-                if (hourOfDay >= 12) {
-                    // PM selected
-                    amTextView.setTextColor(Color.GRAY);
-                    pmTextView.setTextColor(prmyClr);
-                } else {
-                    // AM selected
-                    amTextView.setTextColor(prmyClr);
-                    pmTextView.setTextColor(Color.GRAY);
-                }
-            }
-
-            int crimeMinute = userData.getCrimeMinute();
-            if (crimeMinute >= 0) {
-                // Minute is set, you can use the `crimeMinute` value here
-                int storedCrimeMinute = crimeMinute; // Get the minute part
-                minuteEditText.setText(String.format("%02d", storedCrimeMinute));
-            } else {
-                // Get the current time
-                Calendar currentTime = Calendar.getInstance();
-                int minuteOfDay = currentTime.get(Calendar.MINUTE);
-
-                // Set the current minute to the EditText field
-                minuteEditText.setText(String.format("%02d", minuteOfDay));
-            }
-
-            String storedCrimeTimeIndication = userData.getCrimeTimeIndication();
-            if (storedCrimeTimeIndication != null) {
-                if (storedCrimeTimeIndication == "PM") {
-                    // PM selected
-                    amTextView.setTextColor(Color.GRAY);
-                    pmTextView.setTextColor(prmyClr);
-                } else {
-                    // AM selected
-                    amTextView.setTextColor(prmyClr);
-                    pmTextView.setTextColor(Color.GRAY);
-                }
-            }
-
-        } else {
-            Log.e("Step1Fragment", "onCreateView - userData is null");
-        }
-
-
-        mapView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                v.getParent().requestDisallowInterceptTouchEvent(true);
-                return false;
-            }
-        });
-
-        Button nextButton = view.findViewById(R.id.nextButton);
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            // Inside the onClick() method of the "Next" button in Step2Fragment
+        LinearLayout typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
+        typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Save the user's input to the userData object
-                userData.setCrimePerson(enterPersonEditTexts.getText().toString());
-                getSelectedTime();
-                // Navigate to the next fragment (Step3Fragment)
-                ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
+                navigateToStep1Fragment();
             }
-
         });
 
-        Button addImageButton = view.findViewById(R.id.addImageButton);
-        addImageButton.setOnClickListener(new View.OnClickListener() {
+        // Find the Yes and No buttons
+        yesButton = view.findViewById(R.id.yesButton);
+        noButton = view.findViewById(R.id.noButton);
+
+        // Change the background color of the Yes button to colorPrimary
+        yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
+        // Revert the background color of the No button to the default color
+        noButton.setBackgroundResource(R.drawable.button_selector);
+
+        // Change the text color of the No button to colorPrimary
+        noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+        // Revert the text color of the Yes button to the default color
+        yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+        // Set click listeners for the buttons
+        yesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("MainActivity", "Add Image Button was clicked");
-                openImagePicker();
+                // Change the background color of the Yes button to colorPrimary
+                yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
+                // Revert the background color of the No button to the default color
+                noButton.setBackgroundResource(R.drawable.button_selector);
+
+                // Change the text color of the No button to colorPrimary
+                noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+                // Revert the text color of the Yes button to the default color
+                yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+                // Apply the click animation
+                applyClickAnimation(R.animator.button_scale, v);
+
+                // Slide up the views using TransitionManager
+                TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
+                animatedLayout.setVisibility(View.VISIBLE);
+
+                userData.setYesButtonSelected(true);
             }
         });
 
-        setLocationButton = view.findViewById(R.id.locationSwitch);
-        setLocationButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        noButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    setLocation();
-                    Log.d("MainActivity", "Switch Button was turned ON");
-                } else {
-                    // If the switch is turned off, reset the location flag
-                    isLocationSet = false;
+            public void onClick(View v) {
+                // Change the background color of the No button to colorPrimary
+                noButton.setBackgroundResource(R.drawable.yes_toggle_background);
+                // Revert the background color of the Yes button to the default color
+                yesButton.setBackgroundResource(R.drawable.button_selector);
 
-                    Log.d("MainActivity", "Switch Button was turned OFF");
-                    // Remove the previous marker from the map
-                    if (userMarker != null) {
-                        mapView.getOverlays().remove(userMarker);
-                        mapView.invalidate();
-                        userMarker = null;
-                        Log.d("MainActivity", "User Marker was removed");
-                    }
-                    // Stop location updates
-                    if (locationManager != null && locationListener != null) {
-                        locationManager.removeUpdates(locationListener);
-                    }
-                }
+                // Change the text color of the Yes button to colorPrimary
+                yesButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+                // Revert the text color of the No button to the default color
+                noButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+                // Apply the click animation
+                applyClickAnimation(R.animator.button_scale, v);
+
+                // Slide down the views using TransitionManager
+                TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
+                animatedLayout.setVisibility(View.GONE);
+
+                userData.setYesButtonSelected(false);
             }
         });
+
         todayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -406,7 +331,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
                 todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
                 yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
-                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext() ,R.drawable.button_background));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
 
                 // Get the previous day's date
                 Calendar previousDate = Calendar.getInstance();
@@ -444,6 +369,14 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
         // Find the ImageView by its ID
         ImageView iconImageView = view.findViewById(R.id.iconImageView);
+        // Set the click listener for the ImageView
+        iconImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle the click event here
+                onDateIconClick();
+            }
+        });
 
         // Find your hour and minute EditText fields by their IDs
         EditText hourEditText = view.findViewById(R.id.hourEditText);
@@ -462,22 +395,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         // Set an InputFilter to limit the minute EditText to the range from 0 to 59
         minuteEditText.setFilters(new InputFilter[]{
                 new InputFilterMinMax("0", "59")
-        });
-        // Set the click listener for the ImageView
-        iconImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Handle the click event here
-                onDateIconClick();
-            }
-        });
-
-        viewMaps.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showLocationBottomSheet();
-                Log.d("MainActivity", "View Maps Button was clicked");
-            }
         });
 
         hourIncreaseButton.setOnClickListener(new View.OnClickListener() {
@@ -555,6 +472,19 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
+
+        imageUrls = new ArrayList<>();
+        loadUserData();
+        loadUserLocation();
+
+        mapView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                v.getParent().requestDisallowInterceptTouchEvent(true);
+                return false;
+            }
+        });
+
         barangayOptions.add("Balantacan");
         barangayOptions.add("Bancal Pugad");
         barangayOptions.add("Bancal Sinubli");
@@ -607,94 +537,37 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
-        // Update the map view with a marker at the user's location
-        GeoPoint userLocation = new GeoPoint(phLatitude, phLongitude);
-        userMarker = new Marker(mapView);
-        userMarker.setPosition(userLocation);
-        mapView.getOverlays().add(userMarker);
-
-        // Animate to the user's location with zoom
-        final double zoomLevel = 2.5; // Set your desired zoom level as a double
-        mapView.getController().animateTo(userLocation, zoomLevel, null);
-
-        if (userMarker != null) {
-            mapView.getOverlays().remove(userMarker);
-            mapView.invalidate();
-            userMarker = null;
-        }
-
-        LinearLayout typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
-        typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
+        setLocationButton = view.findViewById(R.id.locationSwitchs);
+        setLocationButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-              navigateToStep1Fragment();
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    setLocation();
+                    Log.d("MainActivity", "setLocationButton - Switch Button was turned ON");
+                } else {
+                    removeUserMarker();
+                    stopLocationUpdates();
+                    Log.d("MainActivity", "setLocationButton - Switch Button was turned OFF");
+                }
             }
         });
 
-        // Find the Yes and No buttons
-        yesButton = view.findViewById(R.id.yesButton);
-        noButton = view.findViewById(R.id.noButton);
-
-        // Change the background color of the Yes button to colorPrimary
-        yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
-        // Revert the background color of the No button to the default color
-        noButton.setBackgroundResource(R.drawable.button_selector);
-
-        // Change the text color of the No button to colorPrimary
-        noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-        // Revert the text color of the Yes button to the default color
-        yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-
-        // Set click listeners for the buttons
-        yesButton.setOnClickListener(new View.OnClickListener() {
+        viewMaps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Change the background color of the Yes button to colorPrimary
-                yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
-                // Revert the background color of the No button to the default color
-                noButton.setBackgroundResource(R.drawable.button_selector);
-
-                // Change the text color of the No button to colorPrimary
-                noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-                // Revert the text color of the Yes button to the default color
-                yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-
-                // Apply the click animation
-                applyClickAnimation(R.animator.button_scale, v);
-
-                // Slide up the views using TransitionManager
-                TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
-                animatedLayout.setVisibility(View.VISIBLE);
-
-                userData.setYesButtonSelected(true);
+                showLocationBottomSheet();
+                Log.d("MainActivity", "View Maps Button was clicked");
             }
         });
 
-        noButton.setOnClickListener(new View.OnClickListener() {
+        addImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Change the background color of the No button to colorPrimary
-                noButton.setBackgroundResource(R.drawable.yes_toggle_background);
-                // Revert the background color of the Yes button to the default color
-                yesButton.setBackgroundResource(R.drawable.button_selector);
-
-                // Change the text color of the Yes button to colorPrimary
-                yesButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-                // Revert the text color of the No button to the default color
-                noButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-
-                // Apply the click animation
-                applyClickAnimation(R.animator.button_scale, v);
-
-                // Slide down the views using TransitionManager
-                TransitionManager.beginDelayedTransition((ViewGroup) animatedLayout.getParent());
-                animatedLayout.setVisibility(View.GONE);
-
-                userData.setYesButtonSelected(false);
+                Log.d("MainActivity", "Add Image Button was clicked");
+                openImagePicker();
             }
         });
-        Button backButton = view.findViewById(R.id.backButton);
-        // Inside Step2Fragment
+
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -703,388 +576,148 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            // Inside the onClick() method of the "Next" button in Step2Fragment
+            @Override
+            public void onClick(View v) {
+                // Save the user's input to the userData object
+                userData.setCrimePerson(enterPersonEditTexts.getText().toString());
+                getSelectedTime();
+                // Navigate to the next fragment (Step3Fragment)
+                ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
+            }
 
+        });
         return view;
     }
+    private void saveUserData(double latitude, double longitude) {
+        userData.setCrimeLatitude(latitude);
+        userData.setCrimeLongitude(longitude);
+    }
+    private void loadUserData() {
+        // Populate the UI elements with data from the userData object (if available)
+        if (userData != null) {
+            String crimeType = userData.getCrimeType();
+            if (crimeType != null) {
+                textViewValue.setText(userData.getCrimeType());
+            }
 
-    private void updateDateButtons(String crimeDate) {
-        // Parse the stored date and create a Calendar instance
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-        Calendar selectedDate = Calendar.getInstance();
-        try {
-            selectedDate.setTime(dateFormat.parse(crimeDate));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+            String person = userData.getCrimePerson();
+            if (person != null) {
+                enterPersonEditTexts.setText(userData.getCrimePerson());
+            }
 
-        // Get the current date for comparison
-        Calendar currentDate = Calendar.getInstance();
-
-        // Check if the stored date is today
-        if (selectedDate.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR) &&
-                selectedDate.get(Calendar.DAY_OF_YEAR) == currentDate.get(Calendar.DAY_OF_YEAR)) {
-            // Set the Today button as selected
-            todayButton.setSelected(true);
-            yesterdayButton.setSelected(false);
-            selectDateButton.setSelected(false);
-
-            // Update the text colors and backgrounds for the buttons accordingly
-            todayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
-            yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-            selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-
-            todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
-            yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-            selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-        } else {
-            // Calculate the previous date for comparison
-            Calendar previousDate = Calendar.getInstance();
-            previousDate.add(Calendar.DAY_OF_MONTH, -1);
-
-            // Check if the stored date is yesterday
-            if (selectedDate.get(Calendar.YEAR) == previousDate.get(Calendar.YEAR) &&
-                    selectedDate.get(Calendar.DAY_OF_YEAR) == previousDate.get(Calendar.DAY_OF_YEAR)) {
-                // Set the Yesterday button as selected
-                todayButton.setSelected(false);
-                yesterdayButton.setSelected(true);
+            String crimeDate = userData.getCrimeDate();
+            if (crimeDate != null) {
+                // Update the date buttons based on the stored date
+                updateDateButtons(crimeDate);
+            } else {
+                // Set the selected state for the buttons
+                todayButton.setSelected(true);
+                yesterdayButton.setSelected(false);
                 selectDateButton.setSelected(false);
 
-                // Update the text colors and backgrounds for the buttons accordingly
-                todayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-                yesterdayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+                // Set the text colors and backgrounds for the buttons
+                todayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+                yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
                 selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
 
-                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
-                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-            } else {
-                // The stored date is neither today nor yesterday, set the Select Date button as selected
-                todayButton.setSelected(false);
-                yesterdayButton.setSelected(false);
-                selectDateButton.setSelected(true);
-
-                // Update the text colors and backgrounds for the buttons accordingly
-                todayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-                yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
-                selectDateButton.setTextColor(getResources().getColor(R.color.selected_text_color));
-
-                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
                 yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
-                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
 
-                showTextViewNoAnimation(crimeDate);
             }
-        }
-    }
 
+            int crimeHour = userData.getCrimeHour();
+            Log.d("MainActivity", "Current Hour is: " + crimeHour);
+            if (crimeHour >= 0) {
+                // Time is set, you can use the `crimeHour` value here
+                int storedCrimeHour = crimeHour; // Get the hour part
+                hourEditText.setText(String.valueOf(storedCrimeHour));
+            } else {
+                // Get the current time
+                Calendar currentTime = Calendar.getInstance();
+                hourOfDay = currentTime.get(Calendar.HOUR_OF_DAY);
 
-    private void updateButtonUI() {
-        // Check the isYesButtonSelected state from UserData and update the UI accordingly
-        if (userData.isYesButtonSelected()) {
-            yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
-            noButton.setBackgroundResource(R.drawable.button_selector);
-            noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-            yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-            animatedLayout.setVisibility(View.VISIBLE);
+                // Convert 24-hour format to 12-hour format
+                int hour12Format = hourOfDay % 12;
+                if (hour12Format == 0) {
+                    hour12Format = 12; // 0 should be displayed as 12 in 12-hour format
+                }
+
+                // Set the current time to the EditText fields
+                hourEditText.setText(String.valueOf(hour12Format));
+
+                Log.d("MainActivity", "Today Button was clicked");
+                Log.d("MainActivity", "Current Hour is: " + hourEditText.getText().toString());
+
+                // Set the AM/PM states based on the current hour
+                if (hourOfDay >= 12) {
+                    // PM selected
+                    amTextView.setTextColor(Color.GRAY);
+                    pmTextView.setTextColor(prmyClr);
+                } else {
+                    // AM selected
+                    amTextView.setTextColor(prmyClr);
+                    pmTextView.setTextColor(Color.GRAY);
+                }
+            }
+
+            int crimeMinute = userData.getCrimeMinute();
+            if (crimeMinute >= 0) {
+                // Minute is set, you can use the `crimeMinute` value here
+                int storedCrimeMinute = crimeMinute; // Get the minute part
+                minuteEditText.setText(String.format("%02d", storedCrimeMinute));
+            } else {
+                // Get the current time
+                Calendar currentTime = Calendar.getInstance();
+                int minuteOfDay = currentTime.get(Calendar.MINUTE);
+
+                // Set the current minute to the EditText field
+                minuteEditText.setText(String.format("%02d", minuteOfDay));
+            }
+
+            String storedCrimeTimeIndication = userData.getCrimeTimeIndication();
+            if (storedCrimeTimeIndication != null) {
+                if (storedCrimeTimeIndication == "PM") {
+                    // PM selected
+                    amTextView.setTextColor(Color.GRAY);
+                    pmTextView.setTextColor(prmyClr);
+                } else {
+                    // AM selected
+                    amTextView.setTextColor(prmyClr);
+                    pmTextView.setTextColor(Color.GRAY);
+                }
+            }
+
+            Double storedLatitude = userData.getCrimeLatitude();
+            Double storedLongitude = userData.getCrimeLongitude();
+            if (storedLatitude != 0.0 && storedLongitude != 0.0) {
+                Log.e("Step1Fragment", "onCreateView - if method was launched!");
+                setLatitude = storedLatitude;
+                setLongitude = storedLongitude;
+                zoomLevel = 18.0;
+
+                Log.e("Step1Fragment", "onCreateView - storedLatitude value: " + storedLatitude);
+                Log.e("Step1Fragment", "onCreateView - storedLongitude value: " + storedLongitude);
+            } else {
+                // Set default latitude and longitude (e.g., Philippines coordinates)
+                Log.e("Step1Fragment", "onCreateView - else method was launched, you failed");
+                setLatitude = phLatitude;
+                setLongitude = phLongitude;
+                zoomLevel = 2.5;
+            }
+
         } else {
-            noButton.setBackgroundResource(R.drawable.yes_toggle_background);
-            yesButton.setBackgroundResource(R.drawable.button_selector);
-            yesButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-            noButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-            animatedLayout.setVisibility(View.GONE);
+            Log.e("Step1Fragment", "onCreateView - userData is null");
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Update the button UI based on the stored value in UserData
-        updateButtonUI();
-    }
-
-    private void applyClickAnimation(@AnimatorRes int animationResId, View view) {
-        Animator animator = AnimatorInflater.loadAnimator(requireContext(), animationResId);
-        animator.setTarget(view);
-        animator.start();
-    }
-
-    public void onLocationSelected(double retrievedLatitude, double retrievedLongitude) {
-
-        if (userMarker != null) {
-            mapView.getOverlays().remove(userMarker);
-            mapView.invalidate();
-            userMarker = null;
-        }
-        Log.d("MainActivity", "onlocationSelected - Latitude retrieved: " + retrievedLatitude);
-        Log.d("MainActivity", "onlocationSelected - Longitude retrieved: " + retrievedLongitude);
-
-        // Update the latitude and longitude values
-        latitude = retrievedLatitude;
-        longitude = retrievedLongitude;
-        Log.d("MainActivity", "onlocationSelected - New value of Latitude :" + latitude);
-        Log.d("MainActivity", "onlocationSelected - New value of Longitude :" + longitude);
-
-        new Step2Fragment.ConvertCoordinatesTask().execute(latitude, longitude);
-
-        // Update the map view to show the retrieved location
-        if (mapView != null) {
-            // Update the map view with a marker at the user's location
-            GeoPoint userLocation = new GeoPoint(latitude, longitude);
-            userMarker = new Marker(mapView);
-            userMarker.setPosition(userLocation);
-            mapView.getOverlays().add(userMarker);
-
-            // Animate to the user's location with zoom
-            final double zoomLevel = 18.5; // Set your desired zoom level as a double
-            mapView.getController().animateTo(userLocation, zoomLevel, null);
-            // Stop location updates
-            if (locationManager != null && locationListener != null) {
-                locationManager.removeUpdates(locationListener);
-            }
-        }
-    }
-
-    private void showLocationBottomSheet() {
-        // Check if the fragment is already visible
-        Fragment existingFragment = requireActivity().getSupportFragmentManager().findFragmentByTag("location_bottom_sheet_fragment");
-        if (existingFragment != null && existingFragment.isVisible()) {
-            // Fragment is already visible, do not show another instance
-            return;
-        }
-
-        // Create a new instance of the LocationBottomSheetFragment
-        LocationBottomSheetFragment fragment = LocationBottomSheetFragment.newInstance(latitude, longitude);
-        Log.d("MainActivity", "showLocationBottomSheet - New value of Latitudess :" + latitude);
-        Log.d("MainActivity", "showLocationBottomSheet - New value of Longitudes :" + longitude);
-        // Set the LocationSelectionListener on the fragment (which is MainActivity)
-        fragment.setLocationSelectionListener(this);
-
-        // Show the fragment using a FragmentManager
-        FragmentManager fragmentManager = getChildFragmentManager();
-        fragment.show(fragmentManager, "location_bottom_sheet_fragment");
-    }
-
-
-    private void showBottomSheetDialog() {
-        // Create a bottom sheet dialog
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
-
-        // Inflate the bottom sheet dialog content view
-        View contentView = getLayoutInflater().inflate(R.layout.bottom_sheet_dialog_content, null);
-        bottomSheetDialog.setContentView(contentView);
-
-        // Find the ListView in the content view
-        ListView barangayListView = contentView.findViewById(R.id.barangayListView);
-
-        // Create a custom adapter for the ListView
-        CustomDropdownAdapter adapter = new CustomDropdownAdapter(requireContext(), barangayOptions);
-        barangayListView.setAdapter(adapter);
-
-        // Set the item click listener for list items
-        barangayListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String selectedBarangay = barangayOptions.get(position);
-                // Handle the selected barangay as desired
-                barangayTextInputLayouts.setText(selectedBarangay);
-                Log.d("MainActivity", "showBottomSheetDialog - Chosen Barangay :" + barangayTextInputLayouts);
-                bottomSheetDialog.dismiss(); // Dismiss the bottom sheet dialog
-            }
-        });
-
-        // Show the bottom sheet dialog
-        bottomSheetDialog.show();
-    }
-
-    // To get the selected time, you can use the following method
-    private String getSelectedTime() {
-        int hour = Integer.parseInt(hourEditText.getText().toString());
-        int minute = Integer.parseInt(minuteEditText.getText().toString());
-        String time = String.format("%02d:%02d", hour, minute);
-        String timeIndication;
-        if (pmTextView.getCurrentTextColor() == prmyClr) {
-            // PM selected
-            time += " PM";
-            timeIndication = "PM";
-        } else {
-            // AM selected
-            time += " AM";
-            timeIndication = "AM";
-        }
-        Log.d("MainActivity", "getSelectedTime - Selected Time: " + time);
-        Log.d("MainActivity", "getSelectedTime - Selected Hour: " + hour);
-
-        // Update the UserData object with the selected time
-        userData.setCrimeHour(hour);
-        userData.setCrimeMinute(minute);
-        userData.setCrimeTimeIndication(timeIndication);
-
-        return time;
-    }
-
-    private void animateButtonsToLeft() {
-        Log.d("MainActivity", "animateButtonsToLeft - has started");
-
-        int translateDistance = -buttonLayout.getWidth();
-        Animation animation = new TranslateAnimation(0, translateDistance, 0, 0);
-        animation.setDuration(500); // Adjust the duration to make the animation smoother
-
-        animation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                // Update the button texts with the corresponding date
-                showTextViewFromRight(formattedDate);
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                // Hide the buttons after the animation is complete
-                todayButton.setVisibility(View.GONE);
-                yesterdayButton.setVisibility(View.GONE);
-                selectDateButton.setVisibility(View.GONE);
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-
-        todayButton.startAnimation(animation);
-        yesterdayButton.startAnimation(animation);
-        selectDateButton.startAnimation(animation);
-    }
-
-    private void showTextViewFromRight(String date) {
-        Log.d("MainActivity", "showTextViewFromRight - has started");
-        // Set the text for the TextView
-        if (userData != null){
-            String crimeDate = userData.getCrimeDate();
-            if (crimeDate != null){
-                date = userData.getCrimeDate();
-            }
-        }
-        dateTextView.setText(date);
-
-        // Update the visibility of the TextView
-        dateTextView.setVisibility(View.VISIBLE);
-        iconImageView.setVisibility(View.VISIBLE);
-
-        // Animate the TextView from the right side
-        Animation animation = new TranslateAnimation(buttonLayout.getWidth(), 0, 0, 0);
-        animation.setDuration(500); // Adjust the duration to make the animation smoother
-        dateTextView.startAnimation(animation);
-    }
-
-    public void onDateIconClick() {
-        Log.d("MainActivity", "onIconClick - has started");
-        // Animate the dateTextView and iconImageView to the right
-        animateTextViewAndIconToRight();
-
-    }
-
-    private void animateTextViewAndIconToRight() {
-        Log.d("MainActivity", "animateTextViewAndIconToRight - has started");
-        int translateDistance = buttonLayout.getWidth();
-        Animation animation = new TranslateAnimation(0, translateDistance, 0, 0);
-        animation.setDuration(500); // Adjust the duration to make the animation smoother
-
-        animation.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                animateButtonsFromLeftToRight();
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                // Hide only the dateTextView after the animation is complete
-                dateTextView.setVisibility(View.GONE);
-                iconImageView.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-
-        dateTextView.startAnimation(animation);
-
-        // Hide the iconImageView immediately without animation
-        iconImageView.setVisibility(View.GONE);
-    }
-
-    private void animateButtonsFromLeftToRight() {
-        Log.d("MainActivity", "animateButtonsFromLeftToRight - has started");
-        Animation animation = new TranslateAnimation(-buttonLayout.getWidth(), 0, 0, 0);
-        animation.setDuration(500); // Adjust the duration to make the animation smoother
-
-        todayButton.setVisibility(View.VISIBLE);
-        yesterdayButton.setVisibility(View.VISIBLE);
-        selectDateButton.setVisibility(View.VISIBLE);
-
-        todayButton.startAnimation(animation);
-        yesterdayButton.startAnimation(animation);
-        selectDateButton.startAnimation(animation);
-    }
-
-
-    private void showDatePicker() {
-        Log.d("MainActivity", "showDatePicker - has started");
-        final Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
-
-        DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                // Create a SimpleDateFormat to format the date
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-
-                // Create a Calendar instance and set it to the selected date
-                Calendar selectedDate = Calendar.getInstance();
-                selectedDate.set(year, month, dayOfMonth);
-
-                // Format the selected date using the SimpleDateFormat
-                formattedDate = dateFormat.format(selectedDate.getTime());
-                userData.setCrimeDate(formattedDate);
-
-                // Animate the buttons
-                animateButtonsToLeft();
-
-                // Show the iconImageView
-                iconImageView.setVisibility(View.VISIBLE);
-                Log.d("MainActivity", "showDatePicker - Selected Date: " + formattedDate);
-            }
-        }, year, month, dayOfMonth);
-
-        datePickerDialog.show();
-    }
-
-    private void showTextViewNoAnimation(String date) {
-        Log.d("MainActivity", "showTextViewFromRight - has started");
-        // Set the text for the TextView
-        if (userData != null){
-            String crimeDate = userData.getCrimeDate();
-            if (crimeDate != null){
-                date = userData.getCrimeDate();
-            }
-        }
-        dateTextView.setText(date);
-
-        // Update the visibility of the TextView
-        dateTextView.setVisibility(View.VISIBLE);
-        iconImageView.setVisibility(View.VISIBLE);
-        todayButton.setVisibility(View.GONE);
-        yesterdayButton.setVisibility(View.GONE);
-        selectDateButton.setVisibility(View.GONE);
-    }
-
+    //START OF LOCATION METHODS
     private void setLocation() {
         Log.d("MainActivity", "setLocation - Set Location Button was clicked");
         // Show the loading GIF
         loadingImageView.setVisibility(View.VISIBLE);
-
         gifTextView.setVisibility(View.VISIBLE);
 
         if (userMarker != null) {
@@ -1104,50 +737,13 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             return;
         }
 
-        Log.e("MainActivity", "Switch button was turned on");
-
         locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
-                // Reverse geocode the latitude and longitude to get the location address
-                Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    if (addresses != null && addresses.size() > 0) {
-                        Address address = addresses.get(0);
-                        // Set the location only if it's not already set
-
-                        if (!isLocationSet) {
-                            locationTextView.setText(address.getAddressLine(0));
-
-                            new Step2Fragment.ConvertCoordinatesTask().execute(latitude, longitude);
-
-                            // Update the map view with a marker at the user's location
-                            GeoPoint userLocation = new GeoPoint(latitude, longitude);
-                            userMarker = new Marker(mapView);
-                            userMarker.setPosition(userLocation);
-                            mapView.getOverlays().add(userMarker);
-
-                            // Animate to the user's location with zoom
-                            final double zoomLevel = 18.5; // Set your desired zoom level as a double
-                            mapView.getController().animateTo(userLocation, zoomLevel, null);
-                            Log.d("MainActivity", "User location using Geopoint: " + userLocation);
-                            // Inside the onLocationChanged() method, after updating the UI, hide the progress bar
-                            // Hide the loading GIF
-                            loadingImageView.setVisibility(View.GONE);
-                            gifTextView.setVisibility(View.GONE);
-                            // Update the flag to indicate that the location is set
-                            isLocationSet = true;
-
-
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                handleLocation(latitude, longitude);
             }
 
 
@@ -1173,17 +769,50 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             Log.d("MainActivity", "setLocationMethod - Permission to open location not allowed");
         }
     }
-    private Handler handler = new Handler();
-    private Runnable hideProgressBarRunnable = new Runnable() {
-        @Override
-        public void run() {
-            progressBar.setVisibility(View.GONE);
+
+    private void handleLocation(Double passLatitude, Double passLongitude) {
+        // Reverse geocode the latitude and longitude to get the location address
+        Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(passLatitude, passLongitude, 1);
+            if (addresses != null && addresses.size() > 0) {
+                Address address = addresses.get(0);
+                // Set the location only if it's not already set
+
+                if (!isLocationSet) {
+                    locationTextView.setText(address.getAddressLine(0));
+
+                    new Step2Fragment.ConvertCoordinatesTask().execute(passLatitude, passLongitude);
+
+                    // Update the map view with a marker at the user's location
+                    GeoPoint userLocation = new GeoPoint(passLatitude, passLongitude);
+                    userMarker = new Marker(mapView);
+                    userMarker.setPosition(userLocation);
+                    mapView.getOverlays().add(userMarker);
+
+                    // Animate to the user's location with zoom
+                    final double zoomLevel = 18.5; // Set your desired zoom level as a double
+                    mapView.getController().animateTo(userLocation, zoomLevel, null);
+                    Log.d("MainActivity", "User location using Geopoint: " + userLocation);
+                    // Inside the onLocationChanged() method, after updating the UI, hide the progress bar
+                    // Hide the loading GIF
+                    loadingImageView.setVisibility(View.GONE);
+                    gifTextView.setVisibility(View.GONE);
+                    // Update the flag to indicate that the location is set
+                    isLocationSet = true;
+
+
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    };
+    }
 
     private class ConvertCoordinatesTask extends AsyncTask<Double, Void, String> {
         private final double LATITUDE_ADJUSTMENT = 0.0001;
         private final double LONGITUDE_ADJUSTMENT = 0.0001;
+
         @Override
         protected void onPreExecute() {
             progressBar.setVisibility(View.VISIBLE); // Show the progress bar
@@ -1199,6 +828,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         protected String doInBackground(Double... params) {
             double latitude = params[0];
             double longitude = params[1];
+            saveUserData(latitude, longitude);
             Log.d("MainActivty", "ConvertCoordinatesTask - Passed latitude value: " + latitude);
             Log.d("MainActivty", "ConvertCoordinatesTask - Passed longitude value: " + longitude);
             String barangay = null;
@@ -1229,11 +859,11 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                         if (village != null && !village.isEmpty()) {
                             barangay = addressObject.optString("village");
                             Log.d("MainActivty", "ConvertCoordinatesTask - User barangay using OpenStreets: " + barangay);
-                        } else if (barangay == null){
+                        } else if (barangay == null) {
                             // Call the method to load barangays from CSV and get the corresponding barangay name
                             barangay = loadBarangaysFromCSV(latitude, longitude);
                             Log.d("MainActivty", "ConvertCoordinatesTask - loadBarangaysFromCSV has started");
-                        }  else {
+                        } else {
                             Log.d("MainActivty", "ConvertCoordinatesTask - Adjusting coordinates");
                             // Adjust the latitude and longitude based on the current adjustment value
                             latitude += adjustment;
@@ -1329,29 +959,600 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         return Math.round(value * 1000.0) / 1000.0;
     }
 
-    // Helper method to convert content URI to Bitmap
+    private void loadUserLocation() {
+        // Create and add the marker to the map if the location is not Philippines
+        if (setLatitude != phLatitude || setLongitude != phLongitude) {
+            GeoPoint userLocation = new GeoPoint(setLatitude, setLongitude);
+            userMarker = new Marker(mapView);
+            userMarker.setPosition(userLocation);
+            mapView.getOverlays().add(userMarker);
+
+            // Animate to the user's location with zoom
+            mapView.getController().animateTo(userLocation, zoomLevel, null);
+
+            Log.e("Step1Fragment", "onCreateView - stored Latitude value: " + setLatitude);
+            Log.e("Step1Fragment", "onCreateView - stored Longitude value: " + setLongitude);
+        } else {
+            // Create and add the marker to the map
+            GeoPoint userLocation = new GeoPoint(setLatitude, setLongitude);
+            // Animate to the user's location with zoom
+            mapView.getController().animateTo(userLocation, zoomLevel, null);
+
+            Log.e("Step1Fragment", "onCreateView - userLocation Latitude value: " + setLatitude);
+            Log.e("Step1Fragment", "onCreateView - userLocation Longitude value: " + setLongitude);
+
+        }
+    }
+
+    private void removeUserMarker() {
+        // If the switch is turned off, reset the location flag
+        isLocationSet = false;
+
+        Log.d("MainActivity", "Switch Button was turned OFF");
+        // Remove the previous marker from the map
+        if (userMarker != null) {
+            mapView.getOverlays().remove(userMarker);
+            mapView.invalidate();
+            userMarker = null;
+            Log.d("MainActivity", "User Marker was removed");
+        }
+    }
+
+    private void stopLocationUpdates() {
+        // Stop location updates
+        if (locationManager != null && locationListener != null) {
+            locationManager.removeUpdates(locationListener);
+        }
+    }
+
+    private void showLocationBottomSheet() {
+        // Check if the fragment is already visible
+        Fragment existingFragment = requireActivity().getSupportFragmentManager().findFragmentByTag("location_bottom_sheet_fragment");
+        if (existingFragment != null && existingFragment.isVisible()) {
+            // Fragment is already visible, do not show another instance
+            return;
+        }
+
+        // Create a new instance of the LocationBottomSheetFragment
+        LocationBottomSheetFragment fragment = LocationBottomSheetFragment.newInstance(latitude, longitude);
+        Log.d("MainActivity", "showLocationBottomSheet - New value of Latitudess :" + latitude);
+        Log.d("MainActivity", "showLocationBottomSheet - New value of Longitudes :" + longitude);
+        // Set the LocationSelectionListener on the fragment (which is MainActivity)
+        fragment.setLocationSelectionListener(this);
+
+        // Show the fragment using a FragmentManager
+        FragmentManager fragmentManager = getChildFragmentManager();
+        fragment.show(fragmentManager, "location_bottom_sheet_fragment");
+    }
+
+    private void showBottomSheetDialog() {
+        // Create a bottom sheet dialog
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+
+        // Inflate the bottom sheet dialog content view
+        View contentView = getLayoutInflater().inflate(R.layout.bottom_sheet_dialog_content, null);
+        bottomSheetDialog.setContentView(contentView);
+
+        // Find the ListView in the content view
+        ListView barangayListView = contentView.findViewById(R.id.barangayListView);
+
+        // Create a custom adapter for the ListView
+        CustomDropdownAdapter adapter = new CustomDropdownAdapter(requireContext(), barangayOptions);
+        barangayListView.setAdapter(adapter);
+
+        // Set the item click listener for list items
+        barangayListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String selectedBarangay = barangayOptions.get(position);
+                // Handle the selected barangay as desired
+                barangayTextInputLayouts.setText(selectedBarangay);
+                Log.d("MainActivity", "showBottomSheetDialog - Chosen Barangay :" + barangayTextInputLayouts);
+                bottomSheetDialog.dismiss(); // Dismiss the bottom sheet dialog
+            }
+        });
+
+        // Show the bottom sheet dialog
+        bottomSheetDialog.show();
+    }
+
+    public void onLocationSelected(double retrievedLatitude, double retrievedLongitude) {
+
+        if (userMarker != null) {
+            mapView.getOverlays().remove(userMarker);
+            mapView.invalidate();
+            userMarker = null;
+        }
+        Log.d("MainActivity", "onlocationSelected - Latitude retrieved: " + retrievedLatitude);
+        Log.d("MainActivity", "onlocationSelected - Longitude retrieved: " + retrievedLongitude);
+
+        // Update the latitude and longitude values
+        latitude = retrievedLatitude;
+        longitude = retrievedLongitude;
+        Log.d("MainActivity", "onlocationSelected - New value of Latitude :" + latitude);
+        Log.d("MainActivity", "onlocationSelected - New value of Longitude :" + longitude);
+
+        new Step2Fragment.ConvertCoordinatesTask().execute(latitude, longitude);
+
+        // Update the map view to show the retrieved location
+        if (mapView != null) {
+            // Update the map view with a marker at the user's location
+            GeoPoint userLocation = new GeoPoint(latitude, longitude);
+            userMarker = new Marker(mapView);
+            userMarker.setPosition(userLocation);
+            mapView.getOverlays().add(userMarker);
+
+            // Animate to the user's location with zoom
+            final double zoomLevel = 18.5; // Set your desired zoom level as a double
+            mapView.getController().animateTo(userLocation, zoomLevel, null);
+            // Stop location updates
+            if (locationManager != null && locationListener != null) {
+                locationManager.removeUpdates(locationListener);
+            }
+        }
+    }
+    //END OF LOCATION METHODS
+
+    //START OF PERSON METHODS
+    private void updateButtonUI() {
+        // Check the isYesButtonSelected state from UserData and update the UI accordingly
+        if (userData.isYesButtonSelected()) {
+            yesButton.setBackgroundResource(R.drawable.yes_toggle_background);
+            noButton.setBackgroundResource(R.drawable.button_selector);
+            noButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            yesButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+            animatedLayout.setVisibility(View.VISIBLE);
+        } else {
+            noButton.setBackgroundResource(R.drawable.yes_toggle_background);
+            yesButton.setBackgroundResource(R.drawable.button_selector);
+            yesButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            noButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+            animatedLayout.setVisibility(View.GONE);
+        }
+    }
+    //END OF PERSON METHODS
+
+    //START OF DATE METHODS
+    private void animateButtonsToLeft() {
+        Log.d("MainActivity", "animateButtonsToLeft - has started");
+
+        int translateDistance = -buttonLayout.getWidth();
+        Animation animation = new TranslateAnimation(0, translateDistance, 0, 0);
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
+
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                // Update the button texts with the corresponding date
+                showTextViewFromRight(formattedDate);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                // Hide the buttons after the animation is complete
+                todayButton.setVisibility(View.GONE);
+                yesterdayButton.setVisibility(View.GONE);
+                selectDateButton.setVisibility(View.GONE);
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+
+        todayButton.startAnimation(animation);
+        yesterdayButton.startAnimation(animation);
+        selectDateButton.startAnimation(animation);
+    }
+
+    private void showTextViewFromRight(String date) {
+        Log.d("MainActivity", "showTextViewFromRight - has started");
+        // Set the text for the TextView
+        if (userData != null) {
+            String crimeDate = userData.getCrimeDate();
+            if (crimeDate != null) {
+                date = userData.getCrimeDate();
+            }
+        }
+        dateTextView.setText(date);
+
+        // Update the visibility of the TextView
+        dateTextView.setVisibility(View.VISIBLE);
+        iconImageView.setVisibility(View.VISIBLE);
+
+        // Animate the TextView from the right side
+        Animation animation = new TranslateAnimation(buttonLayout.getWidth(), 0, 0, 0);
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
+        dateTextView.startAnimation(animation);
+    }
+
+    public void onDateIconClick() {
+        Log.d("MainActivity", "onIconClick - has started");
+        // Animate the dateTextView and iconImageView to the right
+        animateTextViewAndIconToRight();
+
+    }
+
+    private void animateTextViewAndIconToRight() {
+        Log.d("MainActivity", "animateTextViewAndIconToRight - has started");
+        int translateDistance = buttonLayout.getWidth();
+        Animation animation = new TranslateAnimation(0, translateDistance, 0, 0);
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
+
+        animation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                animateButtonsFromLeftToRight();
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                // Hide only the dateTextView after the animation is complete
+                dateTextView.setVisibility(View.GONE);
+                iconImageView.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+
+        dateTextView.startAnimation(animation);
+
+        // Hide the iconImageView immediately without animation
+        iconImageView.setVisibility(View.GONE);
+    }
+
+    private void animateButtonsFromLeftToRight() {
+        Log.d("MainActivity", "animateButtonsFromLeftToRight - has started");
+        Animation animation = new TranslateAnimation(-buttonLayout.getWidth(), 0, 0, 0);
+        animation.setDuration(500); // Adjust the duration to make the animation smoother
+
+        todayButton.setVisibility(View.VISIBLE);
+        yesterdayButton.setVisibility(View.VISIBLE);
+        selectDateButton.setVisibility(View.VISIBLE);
+
+        todayButton.startAnimation(animation);
+        yesterdayButton.startAnimation(animation);
+        selectDateButton.startAnimation(animation);
+    }
+
+    private void showDatePicker() {
+        Log.d("MainActivity", "showDatePicker - has started");
+        final Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                // Create a SimpleDateFormat to format the date
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+
+                // Create a Calendar instance and set it to the selected date
+                Calendar selectedDate = Calendar.getInstance();
+                selectedDate.set(year, month, dayOfMonth);
+
+                // Format the selected date using the SimpleDateFormat
+                formattedDate = dateFormat.format(selectedDate.getTime());
+                userData.setCrimeDate(formattedDate);
+
+                // Animate the buttons
+                animateButtonsToLeft();
+
+                // Show the iconImageView
+                iconImageView.setVisibility(View.VISIBLE);
+                Log.d("MainActivity", "showDatePicker - Selected Date: " + formattedDate);
+            }
+        }, year, month, dayOfMonth);
+
+        datePickerDialog.show();
+    }
+
+    private void showTextViewNoAnimation(String date) {
+        Log.d("MainActivity", "showTextViewFromRight - has started");
+        // Set the text for the TextView
+        if (userData != null) {
+            String crimeDate = userData.getCrimeDate();
+            if (crimeDate != null) {
+                date = userData.getCrimeDate();
+            }
+        }
+        dateTextView.setText(date);
+
+        // Update the visibility of the TextView
+        dateTextView.setVisibility(View.VISIBLE);
+        iconImageView.setVisibility(View.VISIBLE);
+        todayButton.setVisibility(View.GONE);
+        yesterdayButton.setVisibility(View.GONE);
+        selectDateButton.setVisibility(View.GONE);
+    }
+
+    private void updateDateButtons(String crimeDate) {
+        // Parse the stored date and create a Calendar instance
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+        Calendar selectedDate = Calendar.getInstance();
+        try {
+            selectedDate.setTime(dateFormat.parse(crimeDate));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        // Get the current date for comparison
+        Calendar currentDate = Calendar.getInstance();
+
+        // Check if the stored date is today
+        if (selectedDate.get(Calendar.YEAR) == currentDate.get(Calendar.YEAR) &&
+                selectedDate.get(Calendar.DAY_OF_YEAR) == currentDate.get(Calendar.DAY_OF_YEAR)) {
+            // Set the Today button as selected
+            todayButton.setSelected(true);
+            yesterdayButton.setSelected(false);
+            selectDateButton.setSelected(false);
+
+            // Update the text colors and backgrounds for the buttons accordingly
+            todayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+            yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+            selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+
+            todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+            yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+            selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+        } else {
+            // Calculate the previous date for comparison
+            Calendar previousDate = Calendar.getInstance();
+            previousDate.add(Calendar.DAY_OF_MONTH, -1);
+
+            // Check if the stored date is yesterday
+            if (selectedDate.get(Calendar.YEAR) == previousDate.get(Calendar.YEAR) &&
+                    selectedDate.get(Calendar.DAY_OF_YEAR) == previousDate.get(Calendar.DAY_OF_YEAR)) {
+                // Set the Yesterday button as selected
+                todayButton.setSelected(false);
+                yesterdayButton.setSelected(true);
+                selectDateButton.setSelected(false);
+
+                // Update the text colors and backgrounds for the buttons accordingly
+                todayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                yesterdayButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+                selectDateButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+            } else {
+                // The stored date is neither today nor yesterday, set the Select Date button as selected
+                todayButton.setSelected(false);
+                yesterdayButton.setSelected(false);
+                selectDateButton.setSelected(true);
+
+                // Update the text colors and backgrounds for the buttons accordingly
+                todayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                yesterdayButton.setTextColor(getResources().getColor(R.color.unselected_text_color));
+                selectDateButton.setTextColor(getResources().getColor(R.color.selected_text_color));
+
+                todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+                selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
+
+                showTextViewNoAnimation(crimeDate);
+            }
+        }
+    }
+    //END OF DATE METHODS
+
+    //START OF TIME METHODS
+    private void applyClickAnimation(@AnimatorRes int animationResId, View view) {
+        Animator animator = AnimatorInflater.loadAnimator(requireContext(), animationResId);
+        animator.setTarget(view);
+        animator.start();
+    }
+
+    // To get the selected time, you can use the following method
+    private String getSelectedTime() {
+        int hour = Integer.parseInt(hourEditText.getText().toString());
+        int minute = Integer.parseInt(minuteEditText.getText().toString());
+        String time = String.format("%02d:%02d", hour, minute);
+        String timeIndication;
+        if (pmTextView.getCurrentTextColor() == prmyClr) {
+            // PM selected
+            time += " PM";
+            timeIndication = "PM";
+        } else {
+            // AM selected
+            time += " AM";
+            timeIndication = "AM";
+        }
+        Log.d("MainActivity", "getSelectedTime - Selected Time: " + time);
+        Log.d("MainActivity", "getSelectedTime - Selected Hour: " + hour);
+
+        // Update the UserData object with the selected time
+        userData.setCrimeHour(hour);
+        userData.setCrimeMinute(minute);
+        userData.setCrimeTimeIndication(timeIndication);
+
+        return time;
+    }
+    //END OF TIME METHODS
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Update the button UI based on the stored value in UserData
+        updateButtonUI();
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Stop location updates when the fragment is paused
+        stopLocationUpdates();
+    }
+
+    //START OF IMAGE METHODS
+    private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
+        Log.d("MainActivity", "uploadImagesToServer - has started");
+        RequestQueue queue = Volley.newRequestQueue(requireContext());
+        String url = "http://192.168.1.6/recyclearn/report_user/upload.php";
+        boolean success = true;
+        final AtomicInteger uploadCounter = new AtomicInteger(0);
+        for (final String imageUrl : imageUrls) {
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            Log.d("MainActivity", "uploadImagesToServer - Condition: " + response);
+                            if (Objects.equals(response, "success")) {
+                                Toast.makeText(requireContext(), "Image uploaded", Toast.LENGTH_SHORT).show();
+                                int count = uploadCounter.incrementAndGet();
+                                if (count == imageUrls.size()) {
+                                    // All images have been uploaded
+                                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(requireContext(), "Image/s are successfully uploaded ", Toast.LENGTH_SHORT).show();
+                                            Log.d("MainActivity", "uploadImagesToServer - Number of uploaded images : " + count);
+                                            clearForm();
+                                        }
+                                    });
+                                }
+                            } else {
+                                Toast.makeText(requireContext(), "Image upload failed", Toast.LENGTH_SHORT).show();
+                                Log.e("MainActivity", "uploadImagesToServer - Check upload.php");
+                            }
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(requireContext(), error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }) {
+                @Override
+                protected Map<String, String> getParams() {
+                    Map<String, String> paramV = new HashMap<>();
+                    if (imageUrl != null) {
+                        try {
+                            Bitmap imageBitmap = getBitmapFromUri(Uri.parse(imageUrl));
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                            byte[] imageData = baos.toByteArray();
+
+                            String encodedImageData = Base64.encodeToString(imageData, Base64.DEFAULT);
+                            paramV.put("images", encodedImageData);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    paramV.put("reportId", reportId);
+                    Log.d("Upload Image Method:", "ReportID on database: " + reportId);
+                    return paramV;
+                }
+            };
+
+            queue.add(stringRequest);
+        }
+
+        return success;
+    }
+    private void displayImages() {
+        Log.d("MainActivity", "displayImages - has started");
+        requireActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Clear the imageContainer before adding the new images
+                imageContainer.removeAllViews();
+
+                // Load and display the images from the imageUrls list
+                for (final String imageUrl : imageUrls) {
+                    // Create a new FrameLayout to hold the ImageView and delete button
+                    FrameLayout imageLayout = new FrameLayout(requireActivity());
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    layoutParams.setMargins(
+                            getResources().getDimensionPixelSize(R.dimen.image_margin),
+                            getResources().getDimensionPixelSize(R.dimen.image_margin),
+                            getResources().getDimensionPixelSize(R.dimen.image_margin),
+                            getResources().getDimensionPixelSize(R.dimen.image_margin)
+                    );
+                    imageLayout.setLayoutParams(layoutParams);
+
+                    // Create a new ImageView for the image
+                    ImageView imageView = new ImageView(requireActivity());
+                    FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
+                            getResources().getDimensionPixelSize(R.dimen.image_width),
+                            getResources().getDimensionPixelSize(R.dimen.image_height)
+                    );
+                    imageView.setLayoutParams(imageParams);
+                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+                    // Load the image using your preferred library (e.g., Picasso, Glide, etc.)
+                    // Example with Picasso:
+                    Picasso.get()
+                            .load(imageUrl)
+                            .fit()
+                            .centerCrop()
+                            .into(imageView);
+
+                    // Create a new delete button
+                    Button deleteButton = new Button(requireActivity());
+                    FrameLayout.LayoutParams deleteButtonParams = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    deleteButtonParams.gravity = Gravity.TOP | Gravity.END; // Position in top right corner
+                    deleteButton.setLayoutParams(deleteButtonParams);
+                    deleteButton.setText("Delete"); // Set your delete button text here
+
+                    // Set a click listener for the delete button
+                    deleteButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // Remove the image URL from the list
+                            imageUrls.remove(imageUrl);
+                            // Redisplay the updated images
+                            displayImages();
+                        }
+                    });
+
+                    // Add the ImageView and delete button to the imageLayout
+                    imageLayout.addView(imageView);
+                    imageLayout.addView(deleteButton);
+
+                    // Add the imageLayout to the imageContainer
+                    imageContainer.addView(imageLayout);
+                }
+            }
+        });
+    }
+
+    private void openImagePicker() {
+        Log.d("MainActivity", "openImagePicker - has started");
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Images"), PICK_IMAGES_REQUEST_CODE);
+    }
+
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
         InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
         inputStream.close();
         return bitmap;
     }
-    private void crimeDetails() {
-        // Retrieve user ID from the intent or wherever you store it
-        final String userId = "1"; // Replace with the actual user ID
-        final String crime_person = enterPersonEditTexts.getText().toString();
-        final String crime_selectedDate = formattedDate;
-        final String crime_selectedTime = getSelectedTime();
-        final String crime_location = barangayTextInputLayouts.getText().toString();
-        final String crime_description = descriptionEditText.getText().toString();
+    //END OF IMAGE METHODS
 
-        // Save the selected crime type to the userData object
-        userData.setCrimePerson(crime_person);
-        userData.setCrimeDate(crime_selectedDate);
-        userData.setCrimeTime(crime_selectedTime);
-        userData.setCrimeLocation(crime_location);
-        userData.setCrimeDescription(crime_description);
+    private void clearForm() {
+        // Clear the imageContainer by removing all views
+        descriptionEditText.setText("");
+        barangayTextInputLayouts.setText("");
+        imageUrls.clear();
+        imageContainer.removeAllViews();
+        requireActivity().finish();
+        Log.d("MainActivity", "clearForm - Form Cleared");
     }
+
     private void reportCrime() {
         // Retrieve user ID from the intent or wherever you store it
         final String userId = "1"; // Replace with the actual user ID
@@ -1452,92 +1653,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         }).start();
     }
 
-    // Helper method to upload and save the image file on the server
-    private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
-        Log.d("MainActivity", "uploadImagesToServer - has started");
-        RequestQueue queue = Volley.newRequestQueue(requireContext());
-        String url = "http://192.168.1.6/recyclearn/report_user/upload.php";
-        boolean success = true;
-        final AtomicInteger uploadCounter = new AtomicInteger(0);
-        for (final String imageUrl : imageUrls) {
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            Log.d("MainActivity", "uploadImagesToServer - Condition: " + response);
-                            if (Objects.equals(response, "success")) {
-                                Toast.makeText(requireContext(), "Image uploaded", Toast.LENGTH_SHORT).show();
-                                int count = uploadCounter.incrementAndGet();
-                                if (count == imageUrls.size()) {
-                                    // All images have been uploaded
-                                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(requireContext(), "Image/s are successfully uploaded ", Toast.LENGTH_SHORT).show();
-                                            Log.d("MainActivity", "uploadImagesToServer - Number of uploaded images : " + count);
-                                            clearForm();
-                                        }
-                                    });
-                                }
-                            } else {
-                                Toast.makeText(requireContext(), "Image upload failed", Toast.LENGTH_SHORT).show();
-                                Log.e("MainActivity", "uploadImagesToServer - Check upload.php");
-                            }
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Toast.makeText(requireContext(), error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    }) {
-                @Override
-                protected Map<String, String> getParams() {
-                    Map<String, String> paramV = new HashMap<>();
-                    if (imageUrl != null) {
-                        try {
-                            Bitmap imageBitmap = getBitmapFromUri(Uri.parse(imageUrl));
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                            byte[] imageData = baos.toByteArray();
-
-                            String encodedImageData = Base64.encodeToString(imageData, Base64.DEFAULT);
-                            paramV.put("images", encodedImageData);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    paramV.put("reportId", reportId);
-                    Log.d("Upload Image Method:", "ReportID on database: " + reportId);
-                    return paramV;
-                }
-            };
-
-            queue.add(stringRequest);
-        }
-
-        return success;
-    }
-
-    private void clearForm() {
-        // Clear the imageContainer by removing all views
-        descriptionEditText.setText("");
-        barangayTextInputLayouts.setText("");
-        imageUrls.clear();
-        imageContainer.removeAllViews();
-        requireActivity().finish();
-        Log.d("MainActivity", "clearForm - Form Cleared");
-    }
-
-    // Rest of the code remains unchanged
-    private void openImagePicker() {
-        Log.d("MainActivity", "openImagePicker - has started");
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        intent.setType("image/*");
-        startActivityForResult(Intent.createChooser(intent, "Select Images"), PICK_IMAGES_REQUEST_CODE);
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -1572,81 +1687,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         }
     }
 
-
-    private void displayImages() {
-        Log.d("MainActivity", "displayImages - has started");
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Clear the imageContainer before adding the new images
-                imageContainer.removeAllViews();
-
-                // Load and display the images from the imageUrls list
-                for (final String imageUrl : imageUrls) {
-                    // Create a new FrameLayout to hold the ImageView and delete button
-                    FrameLayout imageLayout = new FrameLayout(requireActivity());
-                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                    );
-                    layoutParams.setMargins(
-                            getResources().getDimensionPixelSize(R.dimen.image_margin),
-                            getResources().getDimensionPixelSize(R.dimen.image_margin),
-                            getResources().getDimensionPixelSize(R.dimen.image_margin),
-                            getResources().getDimensionPixelSize(R.dimen.image_margin)
-                    );
-                    imageLayout.setLayoutParams(layoutParams);
-
-                    // Create a new ImageView for the image
-                    ImageView imageView = new ImageView(requireActivity());
-                    FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
-                            getResources().getDimensionPixelSize(R.dimen.image_width),
-                            getResources().getDimensionPixelSize(R.dimen.image_height)
-                    );
-                    imageView.setLayoutParams(imageParams);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-
-                    // Load the image using your preferred library (e.g., Picasso, Glide, etc.)
-                    // Example with Picasso:
-                    Picasso.get()
-                            .load(imageUrl)
-                            .fit()
-                            .centerCrop()
-                            .into(imageView);
-
-                    // Create a new delete button
-                    Button deleteButton = new Button(requireActivity());
-                    FrameLayout.LayoutParams deleteButtonParams = new FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
-                    );
-                    deleteButtonParams.gravity = Gravity.TOP | Gravity.END; // Position in top right corner
-                    deleteButton.setLayoutParams(deleteButtonParams);
-                    deleteButton.setText("Delete"); // Set your delete button text here
-
-                    // Set a click listener for the delete button
-                    deleteButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            // Remove the image URL from the list
-                            imageUrls.remove(imageUrl);
-                            // Redisplay the updated images
-                            displayImages();
-                        }
-                    });
-
-                    // Add the ImageView and delete button to the imageLayout
-                    imageLayout.addView(imageView);
-                    imageLayout.addView(deleteButton);
-
-                    // Add the imageLayout to the imageContainer
-                    imageContainer.addView(imageLayout);
-                }
-            }
-        });
-    }
-
-    // Add the following method to handle the permission request result
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -1655,7 +1695,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             // Permission granted, request location updates
             if (locationManager != null) {
                 if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                        && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                        && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
@@ -1681,9 +1721,9 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         }
 
     }
+
     // Method to navigate back to Step1Fragment
     private void navigateToStep1Fragment() {
-
         // Navigate to the previous fragment (Step1Fragment)
         ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
     }

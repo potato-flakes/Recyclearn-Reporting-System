@@ -2,14 +2,17 @@ package com.system.myapplication;
 
 public class UserData {
     private String crimeType;
-    private boolean isYesButtonSelected;
+    private boolean isYesButtonSelected = true;
     private String crimePerson;
     private String crimeDate;
     private String crimeTime;
+    private String selectedBarangay;
     private int crimeHour = -1;
     private int crimeMinute = -1;
     private String crimeLocation;
     private String crimeTimeIndication;
+    private double latitude;
+    private double longitude;
 
     // Create getters and setters for each field
 
@@ -86,5 +89,29 @@ public class UserData {
 
     public void setCrimeDescription(String crimeLocation) {
         this.crimeLocation = crimeLocation;
+    }
+    public String getSelectedBarangay() {
+        return selectedBarangay;
+    }
+
+    public void setSelectedBarangay(String selectedBarangay) {
+
+        this.selectedBarangay = selectedBarangay;
+    }
+
+    public double getCrimeLatitude() {
+        return latitude;
+    }
+    public void setCrimeLatitude(Double latitude) {
+
+        this.latitude = latitude;
+    }
+
+    public double getCrimeLongitude() {
+        return longitude;
+    }
+    public void setCrimeLongitude(Double longitude) {
+
+        this.longitude = longitude;
     }
 }
