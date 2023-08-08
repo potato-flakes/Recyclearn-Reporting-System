@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/type_of_crime_background"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="10dp">
 
@@ -12,163 +12,246 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="15dp"
         android:fontFamily="@font/poppinsmedium"
-        android:text="What kind of crime you want to report: "
+        android:text="What kind of crime you want to report:"
         android:textColor="@android:color/black"
         android:textSize="17sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"/>
 
-    <!-- Add the custom error message view below the RadioGroup -->
-    <include
-        layout="@layout/layout_custom_error_message"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:id="@+id/customErrorMessage"
-        android:visibility="gone" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/type_of_crime_background">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/crimeRadioGroupLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="20dp">
-
-        <RadioGroup
-            android:id="@+id/crimeRadioGroup"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <RadioButton
-                android:id="@+id/radioButton1"
+            <!-- Add the custom error message view below the RadioGroup -->
+            <include
+                android:id="@+id/customErrorMessage"
+                layout="@layout/layout_custom_error_message"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:button="@drawable/custom_radio_button"
-                android:fontFamily="@font/poppinsmedium"
-                android:padding="15dp"
-                android:text="Manyilab kayi"
-                android:textSize="15sp" />
-            <!-- Add other RadioButtons with the custom background selector here -->
+                android:layout_gravity="left"
+                android:visibility="gone" />
 
-
-            <!-- Add a horizontal divider here -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray" />
-
-            <RadioButton
-                android:id="@+id/radioButton2"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/crimeRadioGroupLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:button="@drawable/custom_radio_button"
-                android:fontFamily="@font/poppinsmedium"
-                android:padding="15dp"
-                android:text="Magkayi"
-                android:textSize="15sp" />
+                android:layout_gravity="center">
 
-            <!-- Add a horizontal divider here -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray" />
+                <RadioGroup
+                    android:id="@+id/crimeRadioGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <RadioButton
-                android:id="@+id/radioButton3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:button="@drawable/custom_radio_button"
-                android:fontFamily="@font/poppinsmedium"
-                android:padding="15dp"
-                android:text="Itang kayi pin"
-                android:textSize="15sp" />
+                    <RadioButton
+                        android:id="@+id/radioButton1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Illegal Dumping"
+                        android:textSize="15sp" />
+                    <!-- Add other RadioButtons with the custom background selector here -->
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray" />
 
-            <RadioButton
-                android:id="@+id/radioButton4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:button="@drawable/custom_radio_button"
-                android:fontFamily="@font/poppinsmedium"
-                android:padding="15dp"
-                android:text="Manyilab kayi"
-                android:textSize="15sp" />
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
 
-            <!-- Add a horizontal divider here -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray" />
+                    <RadioButton
+                        android:id="@+id/radioButton2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Vandalism"
+                        android:textSize="15sp" />
 
-            <RadioButton
-                android:id="@+id/radioButton5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:button="@drawable/custom_radio_button"
-                android:fontFamily="@font/poppinsmedium"
-                android:padding="15dp"
-                android:text="Magkayi"
-                android:textSize="15sp" />
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
 
-            <!-- Add a horizontal divider here -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray" />
+                    <RadioButton
+                        android:id="@+id/radioButton3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Noise Pollution"
+                        android:textSize="15sp" />
 
-            <RadioButton
-                android:id="@+id/radioButton6"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:button="@drawable/custom_radio_button"
-                android:fontFamily="@font/poppinsmedium"
-                android:padding="15dp"
-                android:text="Itang kayi pin"
-                android:textSize="15sp" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
 
-        </RadioGroup>
+                    <RadioButton
+                        android:id="@+id/radioButton4"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Air Pollution"
+                        android:textSize="15sp" />
 
-    </com.google.android.material.textfield.TextInputLayout>
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
 
-    <!-- Add optional space between views -->
-    <Space
+                    <RadioButton
+                        android:id="@+id/radioButton5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Water Pollution"
+                        android:textSize="15sp" />
+
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <RadioButton
+                        android:id="@+id/radioButton6"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Wildlife Harm"
+                        android:textSize="15sp" />
+
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <RadioButton
+                        android:id="@+id/radioButton7"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Unlawful Construction"
+                        android:textSize="15sp" />
+
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <RadioButton
+                        android:id="@+id/radioButton8"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Water Pollution"
+                        android:textSize="15sp" />
+
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <RadioButton
+                        android:id="@+id/radioButton9"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Wildlife Harm"
+                        android:textSize="15sp" />
+
+                    <!-- Add a horizontal divider here -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray" />
+
+                    <RadioButton
+                        android:id="@+id/radioButton10"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:button="@drawable/custom_radio_button"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:padding="15dp"
+                        android:text="Unlawful Construction"
+                        android:textSize="15sp" />
+
+                </RadioGroup>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="16dp" />
+        android:layout_height="wrap_content">
 
-    <!-- Optionally, you can add more UI elements here for additional input -->
+        <Button
+            android:id="@+id/nextButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_rounded_background"
+            android:paddingStart="25dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="25dp"
+            android:paddingBottom="8dp"
+            android:text="Continue to Crime Details"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"/>
 
-    <Button
-        android:id="@+id/nextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/button_rounded_background"
-        android:paddingStart="25dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="25dp"
-        android:paddingBottom="8dp"
-        android:text="Continue to Crime details"
-        android:textColor="@color/white"
-        android:textSize="14sp" />
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/transparent_button_background"
+            android:fontFamily="@font/poppinsmedium"
+            android:paddingStart="25dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="25dp"
+            android:paddingBottom="8dp"
+            android:text="Cancel Report"
+            android:textColor="@color/black"
+            app:layout_constraintTop_toBottomOf="@id/nextButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"/>
 
-    <Button
-        android:id="@+id/backButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/transparent_button_background"
-        android:fontFamily="@font/poppinsmedium"
-        android:paddingStart="25dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="25dp"
-        android:paddingBottom="8dp"
-        android:text="Cancel Report"
-        android:textColor="@color/black" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

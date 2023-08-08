@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 
 import android.os.Looper;
 import android.text.InputFilter;
+import android.text.TextUtils;
 import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -93,6 +94,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import pl.droidsonroids.gif.GifImageView;
@@ -143,7 +145,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private ImageView enterPersonNameImageView;
     private EditText hourEditText;
     private EditText minuteEditText;
-    private EditText descriptionEditText;
     private EditText enterPersonEditTexts;
     private boolean isLocationSet;
     private Marker userMarker;
@@ -160,9 +161,29 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     double phLatitude = 12.8797;
     double phLongitude = 121.7740;
     double zoomLevel;
+
     public void setUserData(UserData userData) {
         this.userData = userData;
     }
+
+    private EditText descriptionEditText;
+    private Button autoGenerateButton;
+
+    private String generatedDescription;
+    private int typingSpeed = 50; // Adjust the typing speed (in milliseconds)
+    private Handler typingHandler = new Handler(Looper.getMainLooper());
+    private Runnable typingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!TextUtils.isEmpty(generatedDescription)) {
+                String currentText = descriptionEditText.getText().toString();
+                if (currentText.length() < generatedDescription.length()) {
+                    descriptionEditText.setText(generatedDescription.substring(0, currentText.length() + 1));
+                    typingHandler.postDelayed(this, typingSpeed);
+                }
+            }
+        }
+    };
 
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
@@ -207,6 +228,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         backButton = view.findViewById(R.id.backButton);
         addImageButton = view.findViewById(R.id.addImageButton);
         nextButton = view.findViewById(R.id.nextButton);
+        autoGenerateButton = view.findViewById(R.id.autoGenerateButton);
 
         typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
         typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
@@ -542,6 +564,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                     Log.d("MainActivity", "setLocationButton - Switch Button was turned ON");
                 } else {
                     userData.setLocationEnabled(isChecked);
+                    // If the switch is turned off, reset the location flag
+                    isLocationSet = false;
                     removeUserMarker();
                     stopLocationUpdates();
                     Log.d("MainActivity", "setLocationButton - Switch Button was turned OFF");
@@ -582,9 +606,109 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
 
         });
+        descriptionEditText = view.findViewById(R.id.descriptionEditText);
+        autoGenerateButton = view.findViewById(R.id.autoGenerateButton);
+
+        autoGenerateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                generatedDescription = generateDescription();
+                descriptionEditText.setText("");
+                startTypingEffect();
+            }
+        });
 
         return view;
     }
+
+    private void startTypingEffect() {
+        typingHandler.postDelayed(typingRunnable, typingSpeed);
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        typingHandler.removeCallbacks(typingRunnable);
+    }
+
+    private String generateDescription() {
+        String crimeType = textViewValue.getText().toString();
+        String personInvolved = enterPersonEditTexts.getText().toString();
+        String date = formattedDate;
+        String time = getSelectedTime();
+        String location = barangayTextInputLayouts.getText().toString();
+        String[] actions = { "reporting", "documenting", "noticing" };
+        String[] involvement = { "an individual", "a person", "someone" };
+        String action = actions[new Random().nextInt(actions.length)];
+        String involved = involvement[new Random().nextInt(involvement.length)];
+
+        // Generate the description with dynamic content, crime type, date, time, and location
+        String description = "    I am %s an incident of %s that occurred on %s, at around %s near %s.";
+
+        // Incorporate variability and improve grammar and punctuation
+        description = String.format(description, action, crimeType, date, time, location);
+
+        // Conditionally include the person involved if provided
+        if (!personInvolved.isEmpty()) {
+            description += " The person involved is known and described as: %s.";
+            description = String.format(description, personInvolved);
+        } else {
+            description += " The person involved is unknown.";
+        }
+
+        // Add witness account based on crime type
+        if (crimeType.equals("Littering")) {
+            String[] litteringAccounts = {
+                    "I witnessed the individual throwing garbage into the river.",
+                    "I observed the suspect discarding trash in the public area.",
+                    "I reported seeing someone littering near the scene."
+            };
+            String witnessAccount = litteringAccounts[new Random().nextInt(litteringAccounts.length)];
+            description += "\n\n    " + witnessAccount;
+        } else if (crimeType.equals("Burning")) {
+            String[] burningAccounts = {
+                    "I saw the person burning waste materials openly, releasing harmful fumes.",
+                    "I witnessed an individual setting fire to trash, leading to air pollution.",
+                    "I observed someone engaging in open burning, which is hazardous to the environment."
+            };
+            String witnessAccount = burningAccounts[new Random().nextInt(burningAccounts.length)];
+            description += "\n\n    " + witnessAccount;
+        }
+
+        // Add impact of the incident
+        description += "\n\n    This incident has contributed to the degradation of our environment.";
+
+        // Add legal/regulatory context based on crime type
+        if (crimeType.equals("Littering")) {
+            String[] litteringRegulations = {
+                    "This incident is a violation of local environmental regulations.",
+                    "The person who committed this act has violated the city's littering ordinance.",
+                    "Such actions are against the municipal code on proper waste disposal."
+            };
+            String regulation = litteringRegulations[new Random().nextInt(litteringRegulations.length)];
+            description += "\n\n    " + regulation;
+        } else if (crimeType.equals("Burning")) {
+            String[] burningRegulations = {
+                    "This incident is in violation of environmental laws that prohibit open burning.",
+                    "The person who burned waste materials openly has violated air quality regulations.",
+                    "Engaging in open burning is against the legal framework for waste management."
+            };
+            String regulation = burningRegulations[new Random().nextInt(burningRegulations.length)];
+            description += "\n\n    " + regulation;
+        }
+
+        // Add user messages for addressing the report and a "Thank you" message
+        String[] userMessages = {
+                "Your attention to this matter is appreciated. Please address this report promptly.",
+                "Kindly take necessary actions to address this incident. Thank you for your cooperation.",
+                "We request your immediate action to resolve this issue. Your prompt response is valued.",
+                "Your intervention is required to address this reported incident. Thank you for your understanding."
+        };
+        String userMessage = userMessages[new Random().nextInt(userMessages.length)];
+        description += "\n\n    " + userMessage;
+
+        return description;
+    }
+
 
     private void saveUserData() {
         // Save the user's input to the userData object
@@ -597,6 +721,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         userData.setCrimeLatitude(latitude);
         userData.setCrimeLongitude(longitude);
     }
+
     private void loadUserData() {
         // Populate the UI elements with data from the userData object (if available)
         if (userData != null) {
@@ -735,11 +860,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         loadingImageView.setVisibility(View.VISIBLE);
         gifTextView.setVisibility(View.VISIBLE);
 
-        if (userMarker != null) {
-            mapView.getOverlays().remove(userMarker);
-            mapView.invalidate();
-            userMarker = null;
-        }
+        removeUserMarker();
 
         if (!setLocationButton.isChecked()) {
             Log.e("MainActivity", "Switch button was turned off");
@@ -752,30 +873,30 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             return;
         }
 
-        locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                if (!isLocationSet) {
+        if (!isLocationSet) {
+            locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
                     handleLocation(latitude, longitude);
                 }
-            }
 
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+                }
 
-            @Override
-            public void onProviderEnabled(String provider) {
-            }
+                @Override
+                public void onProviderEnabled(String provider) {
+                }
 
-            @Override
-            public void onProviderDisabled(String provider) {
-            }
-        };
+                @Override
+                public void onProviderDisabled(String provider) {
+                }
+            };
+        }
 
         // Request location updates only if the permission is granted
         if (setLocationButton.isChecked() && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -795,42 +916,35 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             List<Address> addresses = geocoder.getFromLocation(passLatitude, passLongitude, 1);
             if (addresses != null && addresses.size() > 0) {
                 Address address = addresses.get(0);
-                // Set the location only if it's not already set
+                locationTextView.setText(address.getAddressLine(0));
+                userData.setCrimeExactLocation(locationTextView.getText().toString());
 
-                    locationTextView.setText(address.getAddressLine(0));
-                    userData.setCrimeExactLocation(locationTextView.getText().toString());
+                new Step2Fragment.ConvertCoordinatesTask().execute(passLatitude, passLongitude);
 
-                    new Step2Fragment.ConvertCoordinatesTask().execute(passLatitude, passLongitude);
+                latitude = passLatitude;
+                longitude = passLongitude;
 
-                    latitude = passLatitude;
-                    longitude = passLongitude;
+                // Update the map view with a marker at the user's location
+                GeoPoint userLocation = new GeoPoint(passLatitude, passLongitude);
+                userMarker = new Marker(mapView);
+                userMarker.setPosition(userLocation);
+                mapView.getOverlays().add(userMarker);
 
-                    // Update the map view with a marker at the user's location
-                    GeoPoint userLocation = new GeoPoint(passLatitude, passLongitude);
-                    userMarker = new Marker(mapView);
-                    userMarker.setPosition(userLocation);
-                    mapView.getOverlays().add(userMarker);
-
-                    // Animate to the user's location with zoom
-                    final double zoomLevel = 18.5; // Set your desired zoom level as a double
-                    mapView.getController().animateTo(userLocation, zoomLevel, null);
-                    Log.d("MainActivity", "User location using Geopoint: " + userLocation);
-                    // Inside the onLocationChanged() method, after updating the UI, hide the progress bar
-                    // Hide the loading GIF
-                    loadingImageView.setVisibility(View.GONE);
-                    gifTextView.setVisibility(View.GONE);
-                    // Update the flag to indicate that the location is set
-                    isLocationSet = true;
+                // Animate to the user's location with zoom
+                final double zoomLevel = 18.5; // Set your desired zoom level as a double
+                mapView.getController().animateTo(userLocation, zoomLevel, null);
+                Log.d("MainActivity", "User location using Geopoint: " + userLocation);
+                // Inside the onLocationChanged() method, after updating the UI, hide the progress bar
+                // Hide the loading GIF
+                loadingImageView.setVisibility(View.GONE);
+                gifTextView.setVisibility(View.GONE);
+                // Update the flag to indicate that the location is set
+                isLocationSet = true;
                 stopLocationUpdates();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public boolean isLocationSet() {
-        return isLocationSet;
     }
 
     private class ConvertCoordinatesTask extends AsyncTask<Double, Void, String> {
@@ -1009,10 +1123,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     }
 
     private void removeUserMarker() {
-        // If the switch is turned off, reset the location flag
-        isLocationSet = false;
-
-        Log.d("MainActivity", "Switch Button was turned OFF");
         // Remove the previous marker from the map
         if (userMarker != null) {
             mapView.getOverlays().remove(userMarker);
@@ -1371,6 +1481,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         // Update the button UI based on the stored value in UserData
         updateButtonUI();
     }
+
     @Override
     public void onPause() {
         super.onPause();
@@ -1444,6 +1555,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
         return success;
     }
+
     private void displayImages() {
         Log.d("MainActivity", "displayImages - has started");
         requireActivity().runOnUiThread(new Runnable() {

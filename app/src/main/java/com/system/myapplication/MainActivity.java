@@ -878,12 +878,6 @@ public class MainActivity extends AppCompatActivity implements LocationSelection
     public void handleLocation(double retrievedLatitude, double retrievedLongitude) {
 
     }
-
-    @Override
-    public boolean isLocationSet() {
-        return false;
-    }
-
     private class ConvertCoordinatesTask extends AsyncTask<Double, Void, String> {
         private final double LATITUDE_ADJUSTMENT = 0.0001;
         private final double LONGITUDE_ADJUSTMENT = 0.0001;
