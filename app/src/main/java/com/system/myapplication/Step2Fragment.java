@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.os.CountDownTimer;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -112,7 +113,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private static final int RESULT_OK = Activity.RESULT_OK;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
     private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
-    private TextInputLayout textInputLayoutFirstName;
+    private TextInputLayout textInputLayoutPersonName;
+    private TextInputLayout barangayTextInputLayout;
     private LinearLayout imageContainer;
     private LinearLayout typeOfCrimeLayout;
     private LocationManager locationManager;
@@ -122,7 +124,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private Button yesterdayButton;
     private Button selectDateButton;
     private Button viewMaps;
-    private Button barangayTextInputLayouts;
+    private Button barangaySpinner;
     private Button yesButton;
     private Button noButton;
     private Button backButton;
@@ -146,7 +148,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private ImageView minuteDecreaseButton;
     private ImageView iconImageView;
     private ImageView locationImageView;
-    private ImageView enterPersonNameImageView;
+    private ImageView barangayErrorImageView;
     private ImageView enterPersonNameErrorImageView;
     private EditText hourEditText;
     private EditText minuteEditText;
@@ -155,6 +157,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private Marker userMarker;
     private Switch setLocationButton;
     private ProgressBar progressBar;
+    private ProgressBar autoGenerateProgressBar;
     private GifImageView loadingImageView;
     private UserData userData;
     private LinearLayout animatedLayout;
@@ -206,8 +209,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
         viewMaps = view.findViewById(R.id.viewMapsButton);
         locationTextView = view.findViewById(R.id.locationTextView);
-        yesterdayButton = view.findViewById(R.id.yesterdayButton);
-        selectDateButton = view.findViewById(R.id.selectDateButton);
         dateTextView = view.findViewById(R.id.dateTextView);
         iconImageView = view.findViewById(R.id.iconImageView);
         timeLabel = view.findViewById(R.id.timeLabel);
@@ -219,12 +220,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         hourDecreaseButton = view.findViewById(R.id.hourDecreaseButton);
         minuteIncreaseButton = view.findViewById(R.id.minuteIncreaseButton);
         minuteDecreaseButton = view.findViewById(R.id.minuteDecreaseButton);
-        barangayTextInputLayouts = view.findViewById(R.id.barangaySpinner);
+        barangaySpinner = view.findViewById(R.id.barangaySpinner);
         progressBar = view.findViewById(R.id.progressBar);
         locationImageView = view.findViewById(R.id.locationImageView);
         loadingImageView = view.findViewById(R.id.loadingImageView);
         gifTextView = view.findViewById(R.id.gifTextView);
-        enterPersonNameImageView = view.findViewById(R.id.enterPersonNameImageView);
+        barangayErrorImageView = view.findViewById(R.id.barangayErrorImageView);
         personNameLabel = view.findViewById(R.id.personNameLabel);
         enterPersonEditTexts = view.findViewById(R.id.enterPersonEditTexts);
         animatedLayout = view.findViewById(R.id.animatedLayout);
@@ -235,9 +236,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         nextButton = view.findViewById(R.id.nextButton);
         autoGenerateButton = view.findViewById(R.id.autoGenerateButton);
         enterPersonNameErrorImageView = view.findViewById(R.id.enterPersonNameErrorImageView);
-        textInputLayoutFirstName = view.findViewById(R.id.textInputLayoutFirstName);
-
+        textInputLayoutPersonName = view.findViewById(R.id.textInputLayoutPersonName);
+        barangayTextInputLayout = view.findViewById(R.id.barangayTextInputLayout);
         typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
+        autoGenerateProgressBar = view.findViewById(R.id.autoGenerateProgressBar);
+
+
         typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -551,7 +555,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         barangayOptions.add("Santo Niño (Prado Saba)");
         barangayOptions.add("Santo Tomas (Poblacion)");
 
-        barangayTextInputLayouts.setOnClickListener(new View.OnClickListener() {
+        barangaySpinner.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showBottomSheetDialog();
@@ -622,13 +626,54 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 if (validateUserInputs()) {
                     generatedDescription = generateDescription();
                     descriptionEditText.setText("");
+                    autoGenerateButton.setText("");
                     startTypingEffect();
+
+                    autoGenerateButton.setEnabled(false);
+                    autoGenerateProgressBar.setVisibility(View.VISIBLE);
+                    autoGenerateProgressBar.setIndeterminate(false); // Disable indeterminate mode
+                    autoGenerateProgressBar.setMax(generatedDescription.length()); // Set the max progress
+                    autoGenerateProgressBar.setProgress(0); // Initialize progress
+                    autoGenerateProgressBar.setIndeterminate(true); // Set the ProgressBar to indeterminate mode
+                    autoGenerateProgressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(requireContext(), R.color.white), PorterDuff.Mode.SRC_IN); // Set the color of the ProgressBar
+
+                    typingHandler.removeCallbacks(typingRunnable); // Cancel previous typing
+
+                    typingHandler.post(new Runnable() {
+                        int progress = 0;
+                        int length = generatedDescription.length();
+
+                        @Override
+                        public void run() {
+                            if (progress < length) {
+                                descriptionEditText.setText(generatedDescription.substring(0, progress + 1));
+                                progress++;
+                                autoGenerateProgressBar.setProgress(progress);
+                                typingHandler.postDelayed(this, typingSpeed);
+                                descriptionEditText.setEnabled(false);
+                            } else {
+                                autoGenerateProgressBar.setVisibility(View.GONE); // Hide the ProgressBar
+                                autoGenerateButton.setText("Regenerate");
+                                autoGenerateButton.setEnabled(true); // Re-enable the button
+                                descriptionEditText.setEnabled(true);
+                            }
+                        }
+                    });
+
                 } else {
                     // Show an error message to the user indicating missing inputs
                     Toast.makeText(requireContext(), "Please fill out all required fields.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
+        descriptionEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
 
         return view;
     }
@@ -637,61 +682,38 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         // Validate user inputs here
         boolean isValid = true;
 
-        // Validate crime type selection
-        if (textViewValue.getText().toString().isEmpty()) {
-            isValid = false;
-        } else {
-            textViewValue.setError(null); // Clear the error
-        }
-
-        // Validate person involved input
-        String personInvolved = enterPersonEditTexts.getText().toString().trim();
-        if (personInvolved.isEmpty()) {
-            isValid = false;
-            setupTextWatchers();
-            enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
-            textInputLayoutFirstName.setError("Error: Please enter the person name"); // Clear the error
-            enterPersonEditTexts.requestFocus();
-        } else {
-            enterPersonNameErrorImageView.setVisibility(View.GONE);
-            textInputLayoutFirstName.setError(null); // Clear the error
+        if (userData.isYesButtonSelected()) {
+            // Validate person involved input
+            String personInvolved = enterPersonEditTexts.getText().toString().trim();
+            if (personInvolved.isEmpty()) {
+                isValid = false;
+                setupTextWatchers();
+                enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
+                textInputLayoutPersonName.setError("Error: Please enter the person name"); // Clear the error
+                enterPersonEditTexts.requestFocus();
+            } else {
+                enterPersonNameErrorImageView.setVisibility(View.GONE);
+                textInputLayoutPersonName.setError(null); // Clear the error
+            }
         }
 
         // Validate location input
-        String location = barangayTextInputLayouts.getText().toString().trim();
+        String location = barangaySpinner.getText().toString().trim();
         if (location.isEmpty()) {
             isValid = false;
-
-            barangayTextInputLayouts.setError("Please provide location information");
+            setupTextWatchers();
+            barangayErrorImageView.setVisibility(View.VISIBLE);
+            barangayTextInputLayout.setError("Error: Please provide location information");
+            barangayTextInputLayout.requestFocus();
         } else {
-            barangayTextInputLayouts.setError(null); // Clear the error
+            barangayErrorImageView.setVisibility(View.GONE);
+            barangayTextInputLayout.setError(null); // Clear the error
         }
 
         return isValid;
     }
 
     private void setupTextWatchers() {
-        textViewValue.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (charSequence.toString().isEmpty()) {
-                    enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
-                    textViewValue.setError("Please select a crime type");
-                } else {
-                    textViewValue.setError(null); // Clear the error
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-            }
-        });
-
         enterPersonEditTexts.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -703,11 +725,11 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 String personInvolved = charSequence.toString().trim();
                 if (personInvolved.isEmpty()) {
                     enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
-                    textInputLayoutFirstName.setError("Error: Please enter the person name"); // Clear the error
+                    textInputLayoutPersonName.setError("Error: Please enter the person name"); // Clear the error
                     enterPersonEditTexts.requestFocus();
                 } else {
                     enterPersonNameErrorImageView.setVisibility(View.GONE);
-                    textInputLayoutFirstName.setError(null); // Clear the error
+                    textInputLayoutPersonName.setError(null); // Clear the error
                 }
             }
 
@@ -716,7 +738,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
-        barangayTextInputLayouts.addTextChangedListener(new TextWatcher() {
+        barangaySpinner.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
             }
@@ -725,9 +747,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 String location = charSequence.toString().trim();
                 if (location.isEmpty()) {
-                    barangayTextInputLayouts.setError("Please provide location information");
+                    barangayErrorImageView.setVisibility(View.VISIBLE);
+                    barangayTextInputLayout.setError("Please provide location information");
+                    barangaySpinner.requestFocus();
                 } else {
-                    barangayTextInputLayouts.setError(null); // Clear the error
+                    barangayErrorImageView.setVisibility(View.GONE);
+                    barangayTextInputLayout.setError(null); // Clear the error
                 }
             }
 
@@ -750,9 +775,9 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private String generateDescription() {
         String crimeType = textViewValue.getText().toString();
         String personInvolved = enterPersonEditTexts.getText().toString();
-        String date = formattedDate;
+        String date = userData.getCrimeDate();
         String time = getSelectedTime();
-        String location = barangayTextInputLayouts.getText().toString();
+        String location = barangaySpinner.getText().toString();
         String[] actions = {"reporting", "documenting", "noticing"};
         String action = actions[new Random().nextInt(actions.length)];
 
@@ -762,12 +787,15 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         // Incorporate variability and improve grammar and punctuation
         description = String.format(description, action, crimeType, date, time, location);
 
-        // Conditionally include the person involved if provided
-        if (!personInvolved.isEmpty()) {
-            description += " The person involved is known and described as: %s.";
-            description = String.format(description, personInvolved);
+        if (userData.isYesButtonSelected()) {
+            // Conditionally include the person involved if provided
+            if (!personInvolved.isEmpty()) {
+                description += " The person involved is known and described as: %s.";
+                description = String.format(description, personInvolved);
+            }
         } else {
             description += " The person involved is unknown.";
+
         }
 
         // Add witness account based on crime type
@@ -933,7 +961,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private void saveUserData() {
         // Save the user's input to the userData object
         userData.setCrimePerson(enterPersonEditTexts.getText().toString());
-        userData.setSelectedBarangay(barangayTextInputLayouts.getText().toString());
+        userData.setSelectedBarangay(barangaySpinner.getText().toString());
+        userData.setCrimeDescription(descriptionEditText.getText().toString());
         getSelectedTime();
     }
 
@@ -973,6 +1002,13 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 todayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_selected_shape));
                 yesterdayButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
                 selectDateButton.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.button_background));
+
+                // Get the current date
+                Calendar currentDate = Calendar.getInstance();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+                formattedDate = dateFormat.format(currentDate.getTime());
+
+                userData.setCrimeDate(formattedDate);
 
             }
 
@@ -1040,7 +1076,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
             String storedCrimeBarangay = userData.getSelectedBarangay();
             if (storedCrimeBarangay != null) {
-                barangayTextInputLayouts.setText(userData.getSelectedBarangay());
+                barangaySpinner.setText(userData.getSelectedBarangay());
             }
 
             Double storedLatitude = userData.getCrimeLatitude();
@@ -1066,6 +1102,11 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             String storedCrimeExactLocation = userData.getCrimeExactLocation();
             if (storedCrimeExactLocation != null) {
                 locationTextView.setText(userData.getCrimeExactLocation());
+            }
+
+            String storeCrimeDescription = userData.getCrimeDescription();
+            if (storeCrimeDescription != null) {
+                descriptionEditText.setText(userData.getCrimeDescription());
             }
 
         } else {
@@ -1095,7 +1136,16 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
         if (!isLocationSet) {
             locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-            locationListener = new LocationListener() {
+            if (setLocationButton.isChecked() && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // Request location permissions if not granted
+                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+                return;
+            } else {
+                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                Log.d("MainActivity", "setLocationMethod - Permission to open location not allowed");
+            }
+            locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
                     latitude = location.getLatitude();
@@ -1115,16 +1165,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 @Override
                 public void onProviderDisabled(String provider) {
                 }
-            };
-        }
-
-        // Request location updates only if the permission is granted
-        if (setLocationButton.isChecked() && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            Log.d("MainActivity", "setLocationMethod - Permission to open location allowed");
-        } else {
-            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            Log.d("MainActivity", "setLocationMethod - Permission to open location not allowed");
+            }, null);
         }
     }
 
@@ -1177,8 +1218,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             progressBar.setIndeterminate(true); // Set the ProgressBar to indeterminate mode
             progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(requireContext(), R.color.colorPrimary), PorterDuff.Mode.SRC_IN); // Set the color of the ProgressBar
             // Disable the button
-            barangayTextInputLayouts.setEnabled(false);
-            barangayTextInputLayouts.setVisibility(View.GONE); // Show the progress bar
+            barangaySpinner.setEnabled(false);
+            barangaySpinner.setVisibility(View.GONE); // Show the progress bar
             locationImageView.setVisibility(View.GONE);
         }
 
@@ -1250,17 +1291,17 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         protected void onPostExecute(String result) {
             if (result != null) {
                 // Update the location address in the UI
-                barangayTextInputLayouts.setText(result);
-                Log.d("MainActivty", "ConvertCoordinatesTask - Final detected barangay: " + barangayTextInputLayouts); // Log the loop count
+                barangaySpinner.setText(result);
+                Log.d("MainActivty", "ConvertCoordinatesTask - Final detected barangay: " + barangaySpinner); // Log the loop count
             } else {
                 // If the barangay is not found using OpenStreets and CSV,
                 // set an appropriate message or handle it as needed
-                barangayTextInputLayouts.setText("Barangay not found");
+                barangaySpinner.setText("Barangay not found");
             }
             progressBar.setVisibility(View.GONE); // Hide the progress bar
             // Enable the button
-            barangayTextInputLayouts.setEnabled(true);
-            barangayTextInputLayouts.setVisibility(View.VISIBLE); // Show the progress bar
+            barangaySpinner.setEnabled(true);
+            barangaySpinner.setVisibility(View.VISIBLE); // Show the progress bar
             locationImageView.setVisibility(View.VISIBLE);
         }
     }
@@ -1400,9 +1441,9 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String selectedBarangay = barangayOptions.get(position);
                 // Handle the selected barangay as desired
-                barangayTextInputLayouts.setText(selectedBarangay);
-                userData.setSelectedBarangay(barangayTextInputLayouts.getText().toString());
-                Log.d("MainActivity", "showBottomSheetDialog - Chosen Barangay :" + barangayTextInputLayouts);
+                barangaySpinner.setText(selectedBarangay);
+                userData.setSelectedBarangay(barangaySpinner.getText().toString());
+                Log.d("MainActivity", "showBottomSheetDialog - Chosen Barangay :" + barangaySpinner);
                 bottomSheetDialog.dismiss(); // Dismiss the bottom sheet dialog
             }
         });
@@ -1868,7 +1909,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private void clearForm() {
         // Clear the imageContainer by removing all views
         descriptionEditText.setText("");
-        barangayTextInputLayouts.setText("");
+        barangaySpinner.setText("");
         imageUrls.clear();
         imageContainer.removeAllViews();
         requireActivity().finish();
@@ -1882,7 +1923,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         final String crime_person = enterPersonEditTexts.getText().toString();
         final String crime_selectedDate = formattedDate;
         final String crime_selectedTime = getSelectedTime();
-        final String crime_location = barangayTextInputLayouts.getText().toString();
+        final String crime_location = barangaySpinner.getText().toString();
         final String crime_description = descriptionEditText.getText().toString();
         new Thread(new Runnable() {
             @Override

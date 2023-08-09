@@ -14,6 +14,7 @@ public class UserData {
     private String crimeTimeIndication;
     private double latitude;
     private double longitude;
+    private String crimeDescription;
 
     // Create getters and setters for each field
 
@@ -84,13 +85,6 @@ public class UserData {
     public void setCrimeExactLocation(String crimeLocation) {
         this.crimeLocation = crimeLocation;
     }
-    public String getCrimeDescription() {
-        return crimeLocation;
-    }
-
-    public void setCrimeDescription(String crimeLocation) {
-        this.crimeLocation = crimeLocation;
-    }
     public String getSelectedBarangay() {
         return selectedBarangay;
     }
@@ -121,5 +115,12 @@ public class UserData {
     public void setCrimeLongitude(Double longitude) {
 
         this.longitude = longitude;
+    }
+    public String getCrimeDescription() {
+        return crimeDescription;
+    }
+
+    public void setCrimeDescription(String crimeDescription) {
+        this.crimeDescription = crimeDescription;
     }
 }
