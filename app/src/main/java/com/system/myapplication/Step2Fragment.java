@@ -12,8 +12,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.os.Looper;
+import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -68,6 +70,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputLayout;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -109,6 +112,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private static final int RESULT_OK = Activity.RESULT_OK;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
     private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
+    private TextInputLayout textInputLayoutFirstName;
     private LinearLayout imageContainer;
     private LinearLayout typeOfCrimeLayout;
     private LocationManager locationManager;
@@ -143,6 +147,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private ImageView iconImageView;
     private ImageView locationImageView;
     private ImageView enterPersonNameImageView;
+    private ImageView enterPersonNameErrorImageView;
     private EditText hourEditText;
     private EditText minuteEditText;
     private EditText enterPersonEditTexts;
@@ -229,6 +234,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         addImageButton = view.findViewById(R.id.addImageButton);
         nextButton = view.findViewById(R.id.nextButton);
         autoGenerateButton = view.findViewById(R.id.autoGenerateButton);
+        enterPersonNameErrorImageView = view.findViewById(R.id.enterPersonNameErrorImageView);
+        textInputLayoutFirstName = view.findViewById(R.id.textInputLayoutFirstName);
 
         typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
         typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
@@ -612,18 +619,128 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         autoGenerateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                generatedDescription = generateDescription();
-                descriptionEditText.setText("");
-                startTypingEffect();
+                if (validateUserInputs()) {
+                    generatedDescription = generateDescription();
+                    descriptionEditText.setText("");
+                    startTypingEffect();
+                } else {
+                    // Show an error message to the user indicating missing inputs
+                    Toast.makeText(requireContext(), "Please fill out all required fields.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         return view;
     }
 
+    private boolean validateUserInputs() {
+        // Validate user inputs here
+        boolean isValid = true;
+
+        // Validate crime type selection
+        if (textViewValue.getText().toString().isEmpty()) {
+            isValid = false;
+        } else {
+            textViewValue.setError(null); // Clear the error
+        }
+
+        // Validate person involved input
+        String personInvolved = enterPersonEditTexts.getText().toString().trim();
+        if (personInvolved.isEmpty()) {
+            isValid = false;
+            setupTextWatchers();
+            enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
+            textInputLayoutFirstName.setError("Error: Please enter the person name"); // Clear the error
+            enterPersonEditTexts.requestFocus();
+        } else {
+            enterPersonNameErrorImageView.setVisibility(View.GONE);
+            textInputLayoutFirstName.setError(null); // Clear the error
+        }
+
+        // Validate location input
+        String location = barangayTextInputLayouts.getText().toString().trim();
+        if (location.isEmpty()) {
+            isValid = false;
+
+            barangayTextInputLayouts.setError("Please provide location information");
+        } else {
+            barangayTextInputLayouts.setError(null); // Clear the error
+        }
+
+        return isValid;
+    }
+
+    private void setupTextWatchers() {
+        textViewValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if (charSequence.toString().isEmpty()) {
+                    enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
+                    textViewValue.setError("Please select a crime type");
+                } else {
+                    textViewValue.setError(null); // Clear the error
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+
+        enterPersonEditTexts.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String personInvolved = charSequence.toString().trim();
+                if (personInvolved.isEmpty()) {
+                    enterPersonNameErrorImageView.setVisibility(View.VISIBLE);
+                    textInputLayoutFirstName.setError("Error: Please enter the person name"); // Clear the error
+                    enterPersonEditTexts.requestFocus();
+                } else {
+                    enterPersonNameErrorImageView.setVisibility(View.GONE);
+                    textInputLayoutFirstName.setError(null); // Clear the error
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+
+        barangayTextInputLayouts.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String location = charSequence.toString().trim();
+                if (location.isEmpty()) {
+                    barangayTextInputLayouts.setError("Please provide location information");
+                } else {
+                    barangayTextInputLayouts.setError(null); // Clear the error
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+    }
+
     private void startTypingEffect() {
         typingHandler.postDelayed(typingRunnable, typingSpeed);
     }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -636,10 +753,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         String date = formattedDate;
         String time = getSelectedTime();
         String location = barangayTextInputLayouts.getText().toString();
-        String[] actions = { "reporting", "documenting", "noticing" };
-        String[] involvement = { "an individual", "a person", "someone" };
+        String[] actions = {"reporting", "documenting", "noticing"};
         String action = actions[new Random().nextInt(actions.length)];
-        String involved = involvement[new Random().nextInt(involvement.length)];
 
         // Generate the description with dynamic content, crime type, date, time, and location
         String description = "    I am %s an incident of %s that occurred on %s, at around %s near %s.";
@@ -656,44 +771,149 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         }
 
         // Add witness account based on crime type
-        if (crimeType.equals("Littering")) {
-            String[] litteringAccounts = {
-                    "I witnessed the individual throwing garbage into the river.",
-                    "I observed the suspect discarding trash in the public area.",
-                    "I reported seeing someone littering near the scene."
+        String[] witnessAccounts = null;
+        if (crimeType.equals("Illegal Dumping")) {
+            witnessAccounts = new String[]{
+                    "I witnessed them illegally disposing of waste in an unauthorized location.",
+                    "I observed the person engaged in illegal dumping of trash in a public area.",
+                    "I saw them disposing of waste improperly near the scene."
             };
-            String witnessAccount = litteringAccounts[new Random().nextInt(litteringAccounts.length)];
-            description += "\n\n    " + witnessAccount;
-        } else if (crimeType.equals("Burning")) {
-            String[] burningAccounts = {
-                    "I saw the person burning waste materials openly, releasing harmful fumes.",
-                    "I witnessed an individual setting fire to trash, leading to air pollution.",
-                    "I observed someone engaging in open burning, which is hazardous to the environment."
+        } else if (crimeType.equals("Vandalism")) {
+            witnessAccounts = new String[]{
+                    "I witnessed them defacing public property with graffiti.",
+                    "I observed them damaging public infrastructure through acts of vandalism.",
+                    "I saw them engaging in destructive behavior, causing property damage."
             };
-            String witnessAccount = burningAccounts[new Random().nextInt(burningAccounts.length)];
-            description += "\n\n    " + witnessAccount;
+        } else if (crimeType.equals("Noise Pollution")) {
+            witnessAccounts = new String[]{
+                    "I witnessed excessive noise causing disturbance to the peace and well-being of the community.",
+                    "I observed loud noises that disrupted the tranquility of the area and affected residents.",
+                    "I heard disturbing levels of noise that were harmful to the environment and public health."
+            };
+        } else if (crimeType.equals("Air Pollution")) {
+            witnessAccounts = new String[]{
+                    "I witnessed activities releasing harmful pollutants into the air, such as emissions from industrial processes or vehicles.",
+                    "I observed the release of noxious fumes into the atmosphere, contributing to air pollution.",
+                    "I saw harmful gases being emitted, posing a threat to air quality and public health."
+            };
+        } else if (crimeType.equals("Water Pollution")) {
+            witnessAccounts = new String[]{
+                    "I witnessed contamination or pollution of water bodies, such as rivers, lakes, or oceans.",
+                    "I observed the release of pollutants into water sources, endangering aquatic ecosystems.",
+                    "I saw waste materials being improperly disposed of, leading to water pollution and ecosystem harm."
+            };
+        } else if (crimeType.equals("Wildlife Harm")) {
+            witnessAccounts = new String[]{
+                    "I witnessed incidents that harmed or endangered wildlife, such as illegal hunting or destruction of natural habitats.",
+                    "I observed actions that posed a threat to local wildlife and disrupted the natural balance of the ecosystem.",
+                    "I saw activities that negatively impacted animal habitats and posed risks to the survival of species."
+            };
+        } else if (crimeType.equals("Unlawful Construction")) {
+            witnessAccounts = new String[]{
+                    "I witnessed unauthorized or illegal construction activities that violated building codes or zoning regulations.",
+                    "I observed construction taking place without proper permits, violating established regulations.",
+                    "I saw illegal construction work being carried out, disregarding the guidelines set for the area."
+            };
+        } else if (crimeType.equals("Traffic Violations")) {
+            witnessAccounts = new String[]{
+                    "I witnessed unsafe driving behaviors and traffic violations that posed risks to pedestrians and other road users.",
+                    "I observed reckless driving that endangered lives and violated traffic rules.",
+                    "I saw instances of dangerous driving that compromised road safety and public well-being."
+            };
+        } else if (crimeType.equals("Illegal Fishing")) {
+            witnessAccounts = new String[]{
+                    "I witnessed instances of illegal fishing practices that threatened aquatic ecosystems and sustainability.",
+                    "I observed unauthorized fishing activities that had a detrimental impact on marine life and conservation efforts.",
+                    "I saw violations of fishing regulations that harmed the balance of aquatic environments and fish populations."
+            };
+        } else if (crimeType.equals("Hazardous Materials")) {
+            witnessAccounts = new String[]{
+                    "I witnessed mishandling or improper disposal of hazardous materials that posed risks to public health and the environment.",
+                    "I observed hazardous substances being handled without proper precautions, endangering people and surroundings.",
+                    "I saw improper management of dangerous chemicals, leading to potential health hazards and environmental harm."
+            };
+        }
+
+
+        // Add more witness accounts for other crime types here
+
+        if (witnessAccounts != null) {
+            String witnessAccount = witnessAccounts[new Random().nextInt(witnessAccounts.length)];
+            description += " " + witnessAccount;
         }
 
         // Add impact of the incident
         description += "\n\n    This incident has contributed to the degradation of our environment.";
 
         // Add legal/regulatory context based on crime type
-        if (crimeType.equals("Littering")) {
-            String[] litteringRegulations = {
-                    "This incident is a violation of local environmental regulations.",
-                    "The person who committed this act has violated the city's littering ordinance.",
-                    "Such actions are against the municipal code on proper waste disposal."
+        String[] regulations = null;
+        if (crimeType.equals("Illegal Dumping")) {
+            regulations = new String[]{
+                    "This is a clear violation of local environmental regulations.",
+                    "The person who committed this act has violated waste disposal ordinances.",
+                    "Such actions are against the municipal code on proper waste management."
             };
-            String regulation = litteringRegulations[new Random().nextInt(litteringRegulations.length)];
-            description += "\n\n    " + regulation;
-        } else if (crimeType.equals("Burning")) {
-            String[] burningRegulations = {
-                    "This incident is in violation of environmental laws that prohibit open burning.",
-                    "The person who burned waste materials openly has violated air quality regulations.",
-                    "Engaging in open burning is against the legal framework for waste management."
+        } else if (crimeType.equals("Vandalism")) {
+            regulations = new String[]{
+                    "This incident is a clear violation of laws against property damage and vandalism.",
+                    "The person responsible for this act has violated regulations prohibiting defacement.",
+                    "Engaging in acts of vandalism is against the legal framework for community preservation."
             };
-            String regulation = burningRegulations[new Random().nextInt(burningRegulations.length)];
-            description += "\n\n    " + regulation;
+        } else if (crimeType.equals("Noise Pollution")) {
+            regulations = new String[]{
+                    "This incident is in violation of noise regulations that aim to maintain community well-being.",
+                    "The excessive noise generated is against local laws that ensure peace and quiet for residents.",
+                    "Such noise pollution constitutes a breach of established regulations governing noise levels."
+            };
+        } else if (crimeType.equals("Air Pollution")) {
+            regulations = new String[]{
+                    "This incident is a violation of environmental laws that regulate air quality and pollutant emissions.",
+                    "The release of harmful pollutants into the air is against established regulations for pollution control.",
+                    "Engaging in activities that contribute to air pollution is in defiance of legal frameworks for clean air."
+            };
+        } else if (crimeType.equals("Water Pollution")) {
+            regulations = new String[]{
+                    "This incident is in violation of laws protecting water bodies from contamination and pollution.",
+                    "The contamination of water sources is against established regulations for water quality preservation.",
+                    "Such actions infringe upon legal measures aimed at safeguarding aquatic ecosystems and public health."
+            };
+        } else if (crimeType.equals("Wildlife Harm")) {
+            regulations = new String[]{
+                    "This incident is against regulations that protect wildlife and their habitats from harm and destruction.",
+                    "The harm inflicted upon wildlife is in violation of established conservation and protection laws.",
+                    "Engaging in activities that endanger local fauna goes against legal frameworks for biodiversity conservation."
+            };
+        } else if (crimeType.equals("Unlawful Construction")) {
+            regulations = new String[]{
+                    "This incident is a violation of building codes and zoning regulations that govern construction activities.",
+                    "The unauthorized construction work is against established laws that ensure proper land use and development.",
+                    "Engaging in illegal construction is in defiance of legal guidelines set for urban planning and development."
+            };
+        } else if (crimeType.equals("Traffic Violations")) {
+            regulations = new String[]{
+                    "This incident is in violation of traffic laws that promote road safety and responsible driving behaviors.",
+                    "The observed traffic violations breach regulations that ensure the safety of pedestrians and motorists.",
+                    "Engaging in unsafe driving practices contradicts legal measures put in place to prevent accidents and risks."
+            };
+        } else if (crimeType.equals("Illegal Fishing")) {
+            regulations = new String[]{
+                    "This incident is a violation of regulations that govern fishing practices and aquatic resource conservation.",
+                    "The illegal fishing practices conducted pose a threat to marine ecosystems and sustainable fisheries.",
+                    "Engaging in unauthorized fishing activities is against legal frameworks aimed at maintaining aquatic biodiversity."
+            };
+        } else if (crimeType.equals("Hazardous Materials")) {
+            regulations = new String[]{
+                    "This incident is in violation of regulations that oversee the proper handling and disposal of hazardous materials.",
+                    "The mishandling of hazardous substances is against established laws that safeguard public health and the environment.",
+                    "Engaging in improper management of dangerous chemicals is a breach of legal measures for hazardous waste control."
+            };
+        }
+
+        // Add more regulations for other crime types here
+
+        if (regulations != null) {
+            String regulation = regulations[new Random().nextInt(regulations.length)];
+            description += " " + regulation;
         }
 
         // Add user messages for addressing the report and a "Thank you" message
