@@ -446,10 +446,10 @@ public class EditReportActivity extends AppCompatActivity {
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
             layoutParams.setMargins(
-                    getResources().getDimensionPixelSize(R.dimen.image_margin),
-                    getResources().getDimensionPixelSize(R.dimen.image_margin),
-                    getResources().getDimensionPixelSize(R.dimen.image_margin),
-                    getResources().getDimensionPixelSize(R.dimen.image_margin)
+                    getResources().getDimensionPixelSize(R.dimen.image_left_margin),
+                    getResources().getDimensionPixelSize(R.dimen.image_top_margin),
+                    getResources().getDimensionPixelSize(R.dimen.image_right_margin),
+                    getResources().getDimensionPixelSize(R.dimen.image_bot_margin)
             );
             imageLayout.setLayoutParams(layoutParams);
 
@@ -513,10 +513,10 @@ public class EditReportActivity extends AppCompatActivity {
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
             layoutParams.setMargins(
-                    getResources().getDimensionPixelSize(R.dimen.image_margin),
-                    getResources().getDimensionPixelSize(R.dimen.image_margin),
-                    getResources().getDimensionPixelSize(R.dimen.image_margin),
-                    getResources().getDimensionPixelSize(R.dimen.image_margin)
+                    getResources().getDimensionPixelSize(R.dimen.image_left_margin),
+                    getResources().getDimensionPixelSize(R.dimen.image_top_margin),
+                    getResources().getDimensionPixelSize(R.dimen.image_right_margin),
+                    getResources().getDimensionPixelSize(R.dimen.image_bot_margin)
             );
             imageLayout.setLayoutParams(layoutParams);
 

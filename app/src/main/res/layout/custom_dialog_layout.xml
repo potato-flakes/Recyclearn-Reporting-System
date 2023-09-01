@@ -21,7 +21,8 @@
         android:text="Are you sure?"
         android:textColor="@android:color/black"
         android:textSize="20sp"
-        android:textStyle="bold"></TextView>
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp"></TextView>
 
     <!-- Message -->
     <TextView
@@ -57,8 +58,8 @@
         <Button
             android:id="@+id/btnCancelReport"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/button_background"
+            android:layout_height="30dp"
+            android:background="@drawable/button_selector"
             android:gravity="center"
             android:text="Cancel Report"
             android:textColor="@color/black"></Button>

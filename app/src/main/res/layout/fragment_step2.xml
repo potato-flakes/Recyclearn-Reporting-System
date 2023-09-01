@@ -738,19 +738,6 @@
 
             </androidx.cardview.widget.CardView>
 
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="visible">
-
-                <LinearLayout
-                    android:id="@+id/imageLayout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
-
-            </HorizontalScrollView>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -779,6 +766,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
                 android:background="@drawable/button_background">
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -787,17 +775,17 @@
                     android:layout_height="wrap_content"
                     android:hint="Shortly describe what happened"
                     app:layout_constrainedHeight="true"
-                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/descriptionEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="start|top"
                         android:background="@android:color/transparent"
                         android:fontFamily="@font/poppinsmedium"
+                        android:gravity="start|top"
                         android:inputType="textMultiLine"
                         android:padding="15dp"
                         android:textSize="13sp" />
@@ -806,20 +794,21 @@
 
                 <Button
                     android:id="@+id/autoGenerateButton"
-                    android:layout_width="120dp"
+                    android:layout_width="100dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="10dp"
                     android:background="@drawable/button_rounded_background"
+                    android:paddingStart="2dp"
                     android:paddingTop="2dp"
-                    android:paddingBottom="10dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:textColor="@color/white"
+                    android:paddingEnd="2dp"
+                    android:paddingBottom="2dp"
                     android:text="Generate"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_margin="10dp"
-                    app:layout_constraintTop_toBottomOf="@+id/textInputLayout"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    android:textSize="12sp" />
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textInputLayout" />
 
                 <ProgressBar
                     android:id="@+id/autoGenerateProgressBar"
@@ -827,19 +816,97 @@
                     android:layout_height="30dp"
                     android:elevation="2dp"
                     android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="@+id/autoGenerateButton"
                     app:layout_constraintEnd_toEndOf="@+id/autoGenerateButton"
                     app:layout_constraintStart_toStartOf="@+id/autoGenerateButton"
-                    app:layout_constraintTop_toTopOf="@+id/autoGenerateButton"
-                    app:layout_constraintBottom_toBottomOf="@+id/autoGenerateButton" />
+                    app:layout_constraintTop_toTopOf="@+id/autoGenerateButton" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-            <Button
-                android:id="@+id/addImageButton"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Add Image" />
+                android:layout_marginBottom="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="Time Icon"
+                    android:src="@drawable/ic_evidence" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="2dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Evidences"
+                    android:textSize="15sp" />
+
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Horizontal Scroll View for Images -->
+                    <HorizontalScrollView
+                        android:id="@+id/imageScrollView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:id="@+id/imageLayout"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" />
+
+                    </HorizontalScrollView>
+
+                    <FrameLayout
+                        android:id="@+id/addImageContainer"
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        android:background="@drawable/dashed_border"
+                        android:elevation="4dp"
+                        android:padding="16dp">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center">
+
+                            <ImageView
+                                android:id="@+id/addImageIcon"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_centerHorizontal="true"
+                                android:contentDescription="Add Image Icon"
+                                android:src="@drawable/ic_add_image" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@id/addImageIcon"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginTop="8dp"
+                                android:text="Add Image"
+                                android:textColor="@color/colorPrimary"
+                                android:textSize="16sp" />
+                        </RelativeLayout>
+                    </FrameLayout>
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
+
 
             <Button
                 android:id="@+id/nextButton"

@@ -33,8 +33,8 @@ public class ReportActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ReportAdapter reportAdapter;
     private List<Report> reportList;
-    private static final String API_URL = "http://192.168.1.37/recyclearn/report_user/get_reports.php?userId=";
-    private static final String DELETE_API_URL = "http://192.168.1.37/recyclearn/report_user";
+    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/get_reports.php?userId=";
+    private static final String DELETE_API_URL = "http://192.168.1.10/recyclearn/report_user";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -256,13 +256,13 @@ public class ReportActivity extends AppCompatActivity {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-                String reportId = jsonObject.getString("id"); // Use "id" instead of "reportId"
+                String user_id = jsonObject.getString("user_id"); // Use "id" instead of "reportId"
                 String description = jsonObject.getString("description");
                 String location = jsonObject.getString("location");
                 String date = jsonObject.getString("date");
                 String time = jsonObject.getString("time");
 
-                Report report = new Report(reportId, description, location, date, time);
+                Report report = new Report(user_id, description, location, date, time);
                 reportList.add(report);
             }
 

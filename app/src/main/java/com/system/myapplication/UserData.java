@@ -1,5 +1,10 @@
 package com.system.myapplication;
 
+import android.net.Uri;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class UserData {
     private String crimeType;
     private boolean isYesButtonSelected = true;
@@ -15,6 +20,20 @@ public class UserData {
     private double latitude;
     private double longitude;
     private String crimeDescription;
+    private String userFirstName;
+    private String userLastName;
+    private String userSex;
+    private String userPhone;
+    private String userEmail;
+    private List<String> selectedImageUrls = new ArrayList<>();
+
+    public List<String> getSelectedImageUrls() {
+        return selectedImageUrls;
+    }
+
+    public void setSelectedImageUrls(List<String> selectedImageUrls) {
+        this.selectedImageUrls = selectedImageUrls;
+    }
 
     // Create getters and setters for each field
 
@@ -122,5 +141,40 @@ public class UserData {
 
     public void setCrimeDescription(String crimeDescription) {
         this.crimeDescription = crimeDescription;
+    }
+    public String getUserFirstName() {
+        return userFirstName;
+    }
+
+    public void setUserFirstName(String userFirstName) {
+        this.userFirstName = userFirstName;
+    }
+    public String getUserLastName() {
+        return userLastName;
+    }
+
+    public void setUserLastName(String userLastName) {
+        this.userLastName = userLastName;
+    }
+    public String getUserSex() {
+        return userSex;
+    }
+
+    public void setUserSex(String userSex) {
+        this.userSex = userSex;
+    }
+    public String getUserPhone() {
+        return userPhone;
+    }
+
+    public void setUserPhone(String userPhone) {
+        this.userPhone = userPhone;
+    }
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 }

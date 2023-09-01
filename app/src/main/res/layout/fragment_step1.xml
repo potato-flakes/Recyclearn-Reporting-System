@@ -55,14 +55,12 @@
                         android:id="@+id/radioButton1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
                         android:text="Illegal Dumping"
                         android:textSize="15sp" />
-                    <!-- Add other RadioButtons with the custom background selector here -->
-
-
                     <!-- Add a horizontal divider here -->
                     <View
                         android:layout_width="match_parent"
@@ -73,6 +71,7 @@
                         android:id="@+id/radioButton2"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
@@ -89,6 +88,7 @@
                         android:id="@+id/radioButton3"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
@@ -104,6 +104,7 @@
                         android:id="@+id/radioButton4"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
@@ -120,6 +121,7 @@
                         android:id="@+id/radioButton5"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
@@ -136,6 +138,7 @@
                         android:id="@+id/radioButton6"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
@@ -152,60 +155,12 @@
                         android:id="@+id/radioButton7"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
                         android:button="@drawable/custom_radio_button"
                         android:fontFamily="@font/poppinsmedium"
                         android:padding="15dp"
                         android:text="Unlawful Construction"
                         android:textSize="15sp" />
-
-                    <!-- Add a horizontal divider here -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@android:color/darker_gray" />
-
-                    <RadioButton
-                        android:id="@+id/radioButton8"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:button="@drawable/custom_radio_button"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:padding="15dp"
-                        android:text="Water Pollution"
-                        android:textSize="15sp" />
-
-                    <!-- Add a horizontal divider here -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@android:color/darker_gray" />
-
-                    <RadioButton
-                        android:id="@+id/radioButton9"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:button="@drawable/custom_radio_button"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:padding="15dp"
-                        android:text="Wildlife Harm"
-                        android:textSize="15sp" />
-
-                    <!-- Add a horizontal divider here -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@android:color/darker_gray" />
-
-                    <RadioButton
-                        android:id="@+id/radioButton10"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:button="@drawable/custom_radio_button"
-                        android:fontFamily="@font/poppinsmedium"
-                        android:padding="15dp"
-                        android:text="Unlawful Construction"
-                        android:textSize="15sp" />
-
                 </RadioGroup>
 
             </com.google.android.material.textfield.TextInputLayout>

@@ -45,12 +45,36 @@ public class createReport_activity extends AppCompatActivity{
 
 
         // Start the form by showing the first fragment
-        navigateToNextFragment(Step1Fragment.newInstance(currentPage + 1));
+        navigateToNextFragment(new Step1Fragment());
     }
 
-    // Method to navigate to the next fragment
     public void navigateToNextFragment(Fragment fragment) {
+        Log.e("createReportActivity", "navigateToNextFragment before: " + currentPage);
         currentPage++;
+        updateProgress(currentPage * 33); // Update progress with animation
+        replaceFragment(fragment, currentPage + "/3");
+        updateLabels(); // Update labels here
+        Log.e("createReportActivity", "navigateToNextFragment after: " + currentPage);
+        switch (currentPage) {
+            case 1:
+                showLoadingScreen();
+                getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+                getSupportFragmentManager().executePendingTransactions();
+                hideLoadingScreen();
+                break;
+            case 2:
+            case 3:
+                showLoadingScreen();
+                handler.postDelayed(() -> {
+                    getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+                    hideLoadingScreen();
+                }, 1100);
+                break;
+            default:
+                // Form completed
+                showFormComplete();
+                break;
+        }
         // Pass the userData to the next fragment
         if (fragment instanceof Step1Fragment) {
             ((Step1Fragment) fragment).setUserData(userData);
@@ -59,65 +83,13 @@ public class createReport_activity extends AppCompatActivity{
         } else if (fragment instanceof Step3Fragment) {
             ((Step3Fragment) fragment).setUserData(userData);
         }
-
-        switch (currentPage) {
-            case 1:
-                showLoadingScreen();
-
-                getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
-                getSupportFragmentManager().executePendingTransactions();
-                hideLoadingScreen();
-
-                progressLabel.setText("Next: Crime Details");
-                typeLabel.setText("Crime Type");
-                replaceFragment(fragment, currentPage + "/3");
-                updateProgress(currentPage * 33); // Update progress with animation
-
-                break;
-            case 2:
-                showLoadingScreen();
-
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
-
-                        hideLoadingScreen();
-
-                        progressLabel.setText("Next: Personal Details");
-                        typeLabel.setText("Crime Details");
-                        replaceFragment(fragment, currentPage + "/3");
-                        updateProgress(currentPage * 33); // Update progress with animation
-                    }
-                }, 1000); // Delay time in milliseconds (adjust as needed)
-
-                break;
-            case 3:
-                showLoadingScreen();
-
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
-
-                        hideLoadingScreen();
-
-                        progressLabel.setText("Next: Summary Details");
-                        typeLabel.setText("Personal Details");
-                        replaceFragment(fragment, currentPage + "/3");
-                        updateProgress(currentPage * 34); // Update progress with animation
-                    }
-                }, 1000); // Delay time in milliseconds (adjust as needed)
-                break;
-            default:
-                // Form completed
-                showFormComplete();
-                break;
-        }
     }
 
     public void navigateToPreviousFragment(Fragment fragment) {
+        // Decrement currentPage here
+        Log.e("createReportActivity", "navigateToPreviousFragment before: " + currentPage);
         currentPage--;
+        Log.e("createReportActivity", "navigateToPreviousFragment after: " + currentPage);
         // Pass the userData to the previous fragment
         if (fragment instanceof Step1Fragment) {
             ((Step1Fragment) fragment).setUserData(userData);
@@ -126,34 +98,35 @@ public class createReport_activity extends AppCompatActivity{
         } else if (fragment instanceof Step3Fragment) {
             ((Step3Fragment) fragment).setUserData(userData);
         }
+
+        // Update progress, labels, and replace the fragment
+        int progress = currentPage * 33;
+        replaceFragment(fragment, currentPage + "/3");
+        updateProgress(progress);
+        updateLabels(); // Update labels here
+
+        // Replace the fragment
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+        getSupportFragmentManager().executePendingTransactions();
+        hideLoadingScreen();
+    }
+
+    private void updateLabels() {
+        // Update progressLabel and typeLabel based on currentPage
         switch (currentPage) {
             case 1:
                 progressLabel.setText("Next: Crime Details");
                 typeLabel.setText("Crime Type");
-                showLoadingScreen();
-
-                getSupportFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
-
-                getSupportFragmentManager().executePendingTransactions();
-                hideLoadingScreen();
-                replaceFragment(fragment, currentPage + "/3");
-                updateProgress(currentPage * 33); // Update progress with animation
                 break;
             case 2:
                 progressLabel.setText("Next: Personal Details");
                 typeLabel.setText("Crime Details");
-                replaceFragment(fragment, currentPage + "/3");
-                updateProgress(currentPage * 33); // Update progress with animation
                 break;
             case 3:
+                progressLabel.setText("Next: Summary Details");
                 typeLabel.setText("Personal Details");
-                replaceFragment(fragment, currentPage + "/3");
-                updateProgress(currentPage * 34); // Update progress with animation
                 break;
             default:
-                // Handle if the user tries to go back from the first step
-                currentPage = 1;
-                // You can show a message or handle it as per your app's logic
                 break;
         }
     }

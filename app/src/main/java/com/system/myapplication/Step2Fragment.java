@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.Manifest;
@@ -112,7 +113,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private List<String> imageUrls = new ArrayList<>();
     private static final int RESULT_OK = Activity.RESULT_OK;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
-    private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
+    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/report.php";
     private TextInputLayout textInputLayoutPersonName;
     private TextInputLayout barangayTextInputLayout;
     private LinearLayout imageContainer;
@@ -128,7 +129,9 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private Button yesButton;
     private Button noButton;
     private Button backButton;
-    private Button addImageButton;
+    private LinearLayout imageLayout;
+    private HorizontalScrollView imageScrollView;
+    private FrameLayout addImageContainer;
     private Button nextButton;
     private double latitude;
     private double longitude;
@@ -232,7 +235,9 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         buttonLayout = view.findViewById(R.id.buttonLayout);
         prmyClr = ContextCompat.getColor(requireContext(), R.color.colorPrimary);
         backButton = view.findViewById(R.id.backButton);
-        addImageButton = view.findViewById(R.id.addImageButton);
+        imageLayout = view.findViewById(R.id.imageLayout);
+        imageScrollView = view.findViewById(R.id.imageScrollView);
+        addImageContainer = view.findViewById(R.id.addImageContainer);
         nextButton = view.findViewById(R.id.nextButton);
         autoGenerateButton = view.findViewById(R.id.autoGenerateButton);
         enterPersonNameErrorImageView = view.findViewById(R.id.enterPersonNameErrorImageView);
@@ -592,10 +597,10 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
-        addImageButton.setOnClickListener(new View.OnClickListener() {
+        // Set a click listener for the "Add Image" container
+        addImageContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("MainActivity", "Add Image Button was clicked");
                 openImagePicker();
             }
         });
@@ -1107,6 +1112,11 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             String storeCrimeDescription = userData.getCrimeDescription();
             if (storeCrimeDescription != null) {
                 descriptionEditText.setText(userData.getCrimeDescription());
+            }
+
+            String storeImages = userData.getSelectedImageUrls().toString();
+            if (storeImages != null){
+                displayImages();
             }
 
         } else {
@@ -1754,7 +1764,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
         Log.d("MainActivity", "uploadImagesToServer - has started");
         RequestQueue queue = Volley.newRequestQueue(requireContext());
-        String url = "http://192.168.1.6/recyclearn/report_user/upload.php";
+        String url = "http://192.168.12.219/recyclearn/report_user/upload.php";
         boolean success = true;
         final AtomicInteger uploadCounter = new AtomicInteger(0);
         for (final String imageUrl : imageUrls) {
@@ -1825,8 +1835,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 // Clear the imageContainer before adding the new images
                 imageContainer.removeAllViews();
 
-                // Load and display the images from the imageUrls list
-                for (final String imageUrl : imageUrls) {
+                for (final String imageUrl : userData.getSelectedImageUrls()) {
                     // Create a new FrameLayout to hold the ImageView and delete button
                     FrameLayout imageLayout = new FrameLayout(requireActivity());
                     LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -1834,10 +1843,10 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     );
                     layoutParams.setMargins(
-                            getResources().getDimensionPixelSize(R.dimen.image_margin),
-                            getResources().getDimensionPixelSize(R.dimen.image_margin),
-                            getResources().getDimensionPixelSize(R.dimen.image_margin),
-                            getResources().getDimensionPixelSize(R.dimen.image_margin)
+                            getResources().getDimensionPixelSize(R.dimen.image_left_margin),
+                            getResources().getDimensionPixelSize(R.dimen.image_top_margin),
+                            getResources().getDimensionPixelSize(R.dimen.image_right_margin),
+                            getResources().getDimensionPixelSize(R.dimen.image_bot_margin)
                     );
                     imageLayout.setLayoutParams(layoutParams);
 
@@ -1848,7 +1857,10 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                             getResources().getDimensionPixelSize(R.dimen.image_height)
                     );
                     imageView.setLayoutParams(imageParams);
-                    imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+// Set ScaleType to FIT_XY
+                    imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+
 
                     // Load the image using your preferred library (e.g., Picasso, Glide, etc.)
                     // Example with Picasso:
@@ -1858,17 +1870,17 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                             .centerCrop()
                             .into(imageView);
 
-                    // Create a new delete button
-                    Button deleteButton = new Button(requireActivity());
+                    // Create a new ImageView for the delete button
+                    ImageView deleteButton = new ImageView(requireActivity());
                     FrameLayout.LayoutParams deleteButtonParams = new FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
                             FrameLayout.LayoutParams.WRAP_CONTENT
                     );
                     deleteButtonParams.gravity = Gravity.TOP | Gravity.END; // Position in top right corner
                     deleteButton.setLayoutParams(deleteButtonParams);
-                    deleteButton.setText("Delete"); // Set your delete button text here
+                    deleteButton.setImageResource(R.drawable.ic_image_delete); // Set your delete icon drawable here
 
-                    // Set a click listener for the delete button
+// Set a click listener for the delete button
                     deleteButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -1881,8 +1893,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
                     // Add the ImageView and delete button to the imageLayout
                     imageLayout.addView(imageView);
+// Add the ImageView (delete button) to the imageLayout
                     imageLayout.addView(deleteButton);
-
                     // Add the imageLayout to the imageContainer
                     imageContainer.addView(imageLayout);
                 }
@@ -1897,6 +1909,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         intent.setType("image/*");
         startActivityForResult(Intent.createChooser(intent, "Select Images"), PICK_IMAGES_REQUEST_CODE);
     }
+
 
     private Bitmap getBitmapFromUri(Uri uri) throws IOException {
         InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
@@ -2022,33 +2035,34 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         if (requestCode == PICK_IMAGES_REQUEST_CODE && resultCode == RESULT_OK) {
             if (data != null && data.getClipData() != null) {
                 int count = data.getClipData().getItemCount();
-                // Clear the imageUrls list before adding new images
-                imageUrls.clear();
+                // Clear the selectedImageUrls list before adding new URLs
+                userData.getSelectedImageUrls().clear();
                 for (int i = 0; i < count; i++) {
                     Uri imageUri = data.getClipData().getItemAt(i).getUri();
                     // Process the imageUri and upload the image to your server
-                    // Obtain the URL of the uploaded image and add it to the imageUrls list
+                    // Obtain the URL of the uploaded image and add it to the selectedImageUrls list
                     // Example:
                     String imageUrl = imageUri.toString();
-                    imageUrls.add(imageUrl);
+                    userData.getSelectedImageUrls().add(imageUrl);
                     Log.d("MainActivity", "onActivityResult - FIrst condition - Image URL: " + imageUrl); // Log the image URL
                 }
             } else if (data != null && data.getData() != null) {
                 Uri imageUri = data.getData();
                 // Process the imageUri and upload the image to your server
-                // Obtain the URL of the uploaded image and add it to the imageUrls list
+                // Obtain the URL of the uploaded image and add it to the selectedImageUrls list
                 // Example:
                 String imageUrl = imageUri.toString();
-                imageUrls.add(imageUrl);
+                userData.getSelectedImageUrls().add(imageUrl);
                 Log.d("MainActivity", "onActivityResult - Second condition - Image URL: " + imageUrl); // Log the image URL
             }
-            // Display the selected images in the LinearLayout container
+            // Display the selected images using the userData.getSelectedImageUrls() list
             displayImages();
         } else {
             // Log an error message if the result code or request code doesn't match
             Log.e("MainActivity", "onActivityResult - Failed to pick images. Result code: " + resultCode + ", Request code: " + requestCode);
         }
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

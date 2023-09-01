@@ -185,7 +185,7 @@
         android:id="@+id/nextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Send your report"
+        android:text="Next"
         android:textColor="@color/white"
         android:background="@drawable/button_rounded_background"
         android:layout_gravity="center_horizontal"

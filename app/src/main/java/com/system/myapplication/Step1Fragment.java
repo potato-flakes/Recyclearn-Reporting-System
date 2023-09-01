@@ -8,9 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,6 +32,7 @@ public class Step1Fragment extends Fragment {
     private Handler errorHandler = new Handler();
     private boolean isErrorVisible = false;
     private UserData userData;
+    private Button backButton;
 
     public void setUserData(UserData userData) {
         this.userData = userData;
@@ -47,6 +52,7 @@ public class Step1Fragment extends Fragment {
         crimeRadioGroup = view.findViewById(R.id.crimeRadioGroup);
         crimeRadioGroupLayout = view.findViewById(R.id.crimeRadioGroupLayout);
         customErrorMessageView = view.findViewById(R.id.customErrorMessage);
+        backButton = view.findViewById(R.id.backButton);
         customErrorMessageView.setVisibility(View.GONE); // Hide it initially
 
         // Populate the UI elements with data from the userData object (if available)
@@ -70,7 +76,6 @@ public class Step1Fragment extends Fragment {
         } else {
             Log.e("Step1Fragment", "onCreateView - userData is null");
         }
-
         crimeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -106,6 +111,13 @@ public class Step1Fragment extends Fragment {
 
                 // Navigate to the next fragment (Step2Fragment)
                 ((createReport_activity) requireActivity()).navigateToNextFragment(new Step2Fragment());
+            }
+        });
+
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((createReport_activity) requireActivity()).onBackPressed();
             }
         });
 
