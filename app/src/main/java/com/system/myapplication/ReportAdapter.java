@@ -1,10 +1,16 @@
 package com.system.myapplication;
 // ReportAdapter.java
 
+import android.os.Build;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -51,7 +57,6 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
     @Override
     public void onBindViewHolder(@NonNull ReportViewHolder holder, int position) {
         Report report = reportList.get(position);
-        holder.reportIdTextView.setText(report.getReportId());
         holder.descriptionTextView.setText(report.getDescription());
         holder.locationTextView.setText(report.getLocation());
         holder.dateTextView.setText(report.getDate());
@@ -71,6 +76,17 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         void onEditClick(int position);
     }
 
+    public interface OnMenuClickListener {
+        void onMenuClick(int position);
+    }
+
+    private OnMenuClickListener onMenuClickListener;
+
+    public void setOnMenuClickListener(OnMenuClickListener listener) {
+        this.onMenuClickListener = listener;
+    }
+
+
     public class ReportViewHolder extends RecyclerView.ViewHolder {
         TextView reportIdTextView;
         TextView descriptionTextView;
@@ -78,16 +94,15 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         TextView dateTextView;
         TextView timeTextView;
         Button editButton;
+        ImageView menuButton;
         private Button deleteButton;
 
         public ReportViewHolder(View itemView) {
             super(itemView);
-            reportIdTextView = itemView.findViewById(R.id.reportIdTextView);
             descriptionTextView = itemView.findViewById(R.id.descriptionTextView);
             locationTextView = itemView.findViewById(R.id.locationTextView);
             dateTextView = itemView.findViewById(R.id.dateTextView);
             timeTextView = itemView.findViewById(R.id.timeTextView);
-            editButton = itemView.findViewById(R.id.editButton);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -101,30 +116,67 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 }
             });
 
-            editButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (editClickListener != null) {
-                        int position = getAdapterPosition();
-                        if (position != RecyclerView.NO_POSITION) {
-                            editClickListener.onEditClick(position);
-                        }
-                    }
-                }
-            });
-            deleteButton = itemView.findViewById(R.id.deleteButton);
+            menuButton = itemView.findViewById(R.id.menuButton);
 
-            deleteButton.setOnClickListener(new View.OnClickListener() {
+            menuButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (onDeleteClickListener != null) {
+                    if (onMenuClickListener != null) {
                         int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            onDeleteClickListener.onDeleteClick(position);
+                            // Show the popup menu
+                            showPopupMenu(menuButton, position);
                         }
                     }
                 }
             });
         }
+
+        private void showPopupMenu(View view, final int position) {
+            // Create a PopupMenu and set its style
+            PopupMenu popupMenu = new PopupMenu(view.getContext(), view, Gravity.END);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                popupMenu = new PopupMenu(view.getContext(), view, Gravity.END, 0, R.style.PopupMenuStyle);
+            } else {
+                popupMenu = new PopupMenu(view.getContext(), view);
+            }
+
+            // Inflate the menu XML resource
+            popupMenu.getMenuInflater().inflate(R.menu.custom_popup_menu, popupMenu.getMenu());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                popupMenu.setForceShowIcon(true);
+            }
+
+            // Set click listeners for menu items
+            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                    switch (item.getItemId()) {
+                        case R.id.menu_edit:
+                            if (editClickListener != null) {
+                                editClickListener.onEditClick(position);
+                            }
+                            return true;
+                        case R.id.menu_follow_up:
+                            // Handle the "Follow-up" menu item click
+                            return true;
+                        case R.id.menu_delete:
+                            if (onDeleteClickListener != null) {
+                                onDeleteClickListener.onDeleteClick(position);
+                            }
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+            });
+
+            // Show the PopupMenu
+            popupMenu.show();
+        }
+
+
+
+
     }
 }

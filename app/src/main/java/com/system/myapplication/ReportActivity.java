@@ -9,10 +9,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,14 +29,14 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ReportActivity extends AppCompatActivity {
-
     private RecyclerView recyclerView;
     private ReportAdapter reportAdapter;
     private List<Report> reportList;
-    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/get_reports.php?userId=";
+    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/get_reports.php?user_id=";
     private static final String DELETE_API_URL = "http://192.168.1.10/recyclearn/report_user";
 
     @Override
@@ -58,6 +61,24 @@ public class ReportActivity extends AppCompatActivity {
             }
         });
 
+        // Set menu button click listener
+        reportAdapter.setOnMenuClickListener(new ReportAdapter.OnMenuClickListener() {
+            @Override
+            public void onMenuClick(int position) {
+                // Handle menu button click here
+                // Toggle the visibility of Edit, Follow-up, and Delete buttons
+                ReportAdapter.ReportViewHolder viewHolder = (ReportAdapter.ReportViewHolder) recyclerView.findViewHolderForAdapterPosition(position);
+                if (viewHolder != null) {
+                    LinearLayout buttonLayout = viewHolder.itemView.findViewById(R.id.buttonLayout);
+                    if (buttonLayout.getVisibility() == View.VISIBLE) {
+                        buttonLayout.setVisibility(View.GONE);
+                    } else {
+                        buttonLayout.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        });
+
         // Set edit click listener
         reportAdapter.setOnEditClickListener(new ReportAdapter.OnEditClickListener() {
             @Override
@@ -67,7 +88,7 @@ public class ReportActivity extends AppCompatActivity {
                 String reportId = report.getReportId();
 
                 // Start a new activity to edit the report details
-                Intent intent = new Intent(ReportActivity.this, EditReportActivity.class);
+                Intent intent = new Intent(ReportActivity.this, editReport_activity.class);
                 intent.putExtra("reportId", reportId);
                 startActivity(intent);
                 Log.d("Report Adapter", "Edit report with report ID of : " + reportId); // Log the image URL
@@ -89,8 +110,6 @@ public class ReportActivity extends AppCompatActivity {
                             Report report = reportList.get(position);
                             String reportId = report.getReportId();
 
-                            // Make an API call or execute a database query to delete the report with the given reportId
-                            // Example code:
                             deleteReportFromDatabase(reportId);
 
                             // Update the UI by removing the item from the reportList and notifying the adapter
@@ -106,7 +125,7 @@ public class ReportActivity extends AppCompatActivity {
 
         });
 
-        Button createReportButton = findViewById(R.id.createReportButton);
+        FloatingActionButton createReportButton = findViewById(R.id.createReportButton);
         createReportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -119,7 +138,7 @@ public class ReportActivity extends AppCompatActivity {
     }
 
     @SuppressLint("StaticFieldLeak")
-    private void deleteReportFromDatabase(final String reportId) {
+    private void deleteReportFromDatabase(final String report_id) {
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... voids) {
@@ -132,7 +151,7 @@ public class ReportActivity extends AppCompatActivity {
 
                     // Create JSON object with the reportId
                     JSONObject requestBody = new JSONObject();
-                    requestBody.put("reportId", reportId);
+                    requestBody.put("report_id", report_id);
                     Log.e("Report ID:", String.valueOf(requestBody));
                     Log.d("Delete Report Method", "Delete report from database with report ID of: " + requestBody); // Log the image URL
                     // Write the JSON data to the request body
@@ -171,26 +190,18 @@ public class ReportActivity extends AppCompatActivity {
                 if (success) {
                     // Report deleted successfully
                     // Update the UI by removing the item from the reportList and notifying the adapter
-                    int position = findReportPosition(reportId);
+                    int position = findReportPosition(report_id);
                     if (position >= 0) {
                         reportList.remove(position);
                         reportAdapter.notifyItemRemoved(position);
                     }
                 } else {
-                    // Error occurred while deleting the report
-                    // Show an error message to the user or handle the error as needed
-                    // You can access the error message from the server response
                     String errorMessage = "Failed to delete report";
-                    // ...
+                    Log.e("ReportActivity", "deleteReportFromDatabase - Error: " + errorMessage);
                 }
             }
         }.execute();
     }
-
-
-
-
-
 
     private int findReportPosition(String reportId) {
         for (int i = 0; i < reportList.size(); i++) {
@@ -202,26 +213,45 @@ public class ReportActivity extends AppCompatActivity {
         return -1; // Report not found
     }
 
-
-
     private void fetchReports(final String userId) {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                String response = "";
                 try {
                     URL url = new URL(API_URL + userId);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("GET");
 
-                    InputStream inputStream = connection.getInputStream();
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = bufferedReader.readLine()) != null) {
-                        response.append(line);
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        // Success response (HTTP 200 OK)
+                        InputStream inputStream = connection.getInputStream();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                        StringBuilder responseBuilder = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            responseBuilder.append(line);
+                        }
+                        reader.close();
+                        response = responseBuilder.toString();
+                        inputStream.close();
+                    } else {
+                        // Error response (e.g., HTTP 404, 500, etc.)
+                        InputStream errorStream = connection.getErrorStream();
+                        if (errorStream != null) {
+                            BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
+                            StringBuilder errorResponseBuilder = new StringBuilder();
+                            String errorLine;
+                            while ((errorLine = errorReader.readLine()) != null) {
+                                errorResponseBuilder.append(errorLine);
+                            }
+                            errorReader.close();
+                            response = errorResponseBuilder.toString();
+                            errorStream.close();
+                        }
                     }
-                    bufferedReader.close();
-                    inputStream.close();
+
                     connection.disconnect();
 
                     final String jsonResponse = response.toString();
@@ -232,20 +262,23 @@ public class ReportActivity extends AppCompatActivity {
                         }
                     });
                 } catch (IOException e) {
+                    Log.e("ReportActivty", "fetchReports - Response String: " + response); // Use the declared response variable
                     e.printStackTrace();
                 }
             }
         }).start();
     }
+
     @Override
     protected void onResume() {
         super.onResume();
 
         // Retrieve user ID from the intent or wherever you store it
-        String userId = "1"; // Replace with the actual user ID
+        String userId = "9183797"; // Replace with the actual user ID
 
         fetchReports(userId);
     }
+
     private void parseReportResponse(String response) {
         // Clear the existing report list before parsing the new response
         reportList.clear();
@@ -256,20 +289,26 @@ public class ReportActivity extends AppCompatActivity {
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
 
+                String report_id = jsonObject.getString("report_id"); // Correctly extract the report_id
                 String user_id = jsonObject.getString("user_id"); // Use "id" instead of "reportId"
-                String description = jsonObject.getString("description");
-                String location = jsonObject.getString("location");
-                String date = jsonObject.getString("date");
-                String time = jsonObject.getString("time");
+                String description = jsonObject.getString("crime_type");
+                String location = jsonObject.getString("crime_location");
+                String date = jsonObject.getString("crime_date");
+                String time = jsonObject.getString("crime_time");
 
-                Report report = new Report(user_id, description, location, date, time);
+                Report report = new Report(report_id, user_id, description, location, date, time);
                 reportList.add(report);
             }
 
+            // Reverse the order of the reportList to display newest at the top
+            Collections.reverse(reportList);
+
             reportAdapter.notifyDataSetChanged();
         } catch (JSONException e) {
+            Log.e("ReportActivty", "parseReportResponse - Response String: " + response); // Use the declared response variable
             e.printStackTrace();
         }
     }
+
 
 }

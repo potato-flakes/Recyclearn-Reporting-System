@@ -5,6 +5,7 @@ import android.animation.AnimatorInflater;
 import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -80,6 +82,7 @@ public class Step3Fragment extends Fragment {
     private EditText phoneEditText;
     private Button maleButton;
     private Button femaleButton;
+    private String selectedGender;
     private Button nextButton;
     private UserData userData;
     private RelativeLayout backButtonToF1;
@@ -90,6 +93,8 @@ public class Step3Fragment extends Fragment {
     private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/report.php";
     private Handler handler = new Handler();
     private List<String> imageUrls = new ArrayList<>();
+    private boolean dataFetched = false;
+    private ProgressBar progressBar;
 
     public void setUserData(UserData userData) {
         this.userData = userData;
@@ -109,6 +114,8 @@ public class Step3Fragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        Log.e("Step1Fragment", "You are in Step3Fragment");
+
         firstNameEditText = view.findViewById(R.id.editTextFirstName);
         lastNameEditText = view.findViewById(R.id.editTextLastName);
         emailEditText = view.findViewById(R.id.editTextEmail);
@@ -118,9 +125,6 @@ public class Step3Fragment extends Fragment {
         // Replace "your-server-url.com" with the actual URL of your server and PHP script
         String serverUrl = "http://192.168.1.10/recyclearn/report_user/get_user_details.php";
         String userId = "5320007"; // Replace this with the actual user ID you want to fetch
-
-        // Retrieve the user details from the server
-        new RetrieveUserDetailsTask().execute(serverUrl, userId);
 
         // Find the Yes and No buttons
         maleButton = view.findViewById(R.id.maleButton);
@@ -151,6 +155,7 @@ public class Step3Fragment extends Fragment {
 
                 // Apply the click animation
                 applyClickAnimation(R.animator.button_scale, v);
+                userData.setUserSex("Male");
             }
         });
 
@@ -169,13 +174,51 @@ public class Step3Fragment extends Fragment {
 
                 // Apply the click animation
                 applyClickAnimation(R.animator.button_scale, v);
+                userData.setUserSex("Female");
             }
         });
+
+        // Check if data has already been fetched using the flag in UserData
+        if (!userData.isDataFetched()) {
+            // Retrieve the user details from the server
+            new RetrieveUserDetailsTask().execute(serverUrl, userId);
+            userData.setDataFetched(true);
+        } else {
+            // Set the user details in the EditText fields
+            firstNameEditText.setText(userData.getUserFirstName());
+            lastNameEditText.setText(userData.getUserLastName());
+            emailEditText.setText(userData.getUserEmail());
+            phoneEditText.setText(userData.getUserPhone());
+
+            // Set the gender button based on the fetched gender
+            String sex = userData.getUserSex();
+            if ("Male".equalsIgnoreCase(sex)) {
+                // Set Male button as selected
+                maleButton.setBackgroundResource(R.drawable.yes_toggle_background);
+                maleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+                // Reset Female button
+                femaleButton.setBackgroundResource(R.drawable.button_selector);
+                femaleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            } else if ("Female".equalsIgnoreCase(sex)) {
+                // Set Female button as selected
+                femaleButton.setBackgroundResource(R.drawable.yes_toggle_background);
+                femaleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+
+                // Reset Male button
+                maleButton.setBackgroundResource(R.drawable.button_selector);
+                maleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+            }
+        }
+        boolean isDataFetched = userData.isDataFetched();
+        Log.e("Step3Fragment","onViewCreated isDataFetched:" + isDataFetched);
+
         Button backButton = view.findViewById(R.id.backButton);
         // Inside Step2Fragment
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                loadUserInfo();
                 ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step2Fragment());
             }
         });
@@ -184,31 +227,23 @@ public class Step3Fragment extends Fragment {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String storeFirstName = firstNameEditText.getText().toString();
-                String storeLastName = lastNameEditText.getText().toString();
-
-                // Find the selected gender button
-                String storeSex = "";
-                if (maleButton.getBackground().getConstantState().equals(ContextCompat.getDrawable(getContext(), R.drawable.yes_toggle_background).getConstantState())) {
-                    storeSex = "Male";
-                } else if (femaleButton.getBackground().getConstantState().equals(ContextCompat.getDrawable(getContext(), R.drawable.yes_toggle_background).getConstantState())) {
-                    storeSex = "Female";
-                }
-
-                String storeEmail = emailEditText.getText().toString();
-                String storePhone = phoneEditText.getText().toString();
-
-                userData.setUserFirstName(storeFirstName);
-                userData.setUserLastName(storeLastName);
-                userData.setUserSex(storeSex);
-                userData.setUserEmail(storeEmail);
-                userData.setUserPhone(storePhone);
-
-                Log.e("Step3Fragment", "showSummaryDialog - Sex #1: " + storeSex);
+                loadUserInfo();
                 showSummaryDialog();
             }
         });
 
+    }
+
+    private void loadUserInfo() {
+        String storeFirstName = firstNameEditText.getText().toString();
+        String storeLastName = lastNameEditText.getText().toString();
+        String storeEmail = emailEditText.getText().toString();
+        String storePhone = phoneEditText.getText().toString();
+
+        userData.setUserFirstName(storeFirstName);
+        userData.setUserLastName(storeLastName);
+        userData.setUserEmail(storeEmail);
+        userData.setUserPhone(storePhone);
     }
 
     private void showSummaryDialog() {
@@ -232,11 +267,17 @@ public class Step3Fragment extends Fragment {
         emailTextView = dialogView.findViewById(R.id.emailTextView);
         evidencesOfCrimeTextView = dialogView.findViewById(R.id.evidencesOfCrimeTextView);
         btnCancelReport = dialogView.findViewById(R.id.btnCancelReport);
+        progressBar = dialogView.findViewById(R.id.progressBar);
 
         // Set text in TextViews with user data
         typeOfCrimeTextView.setText(userData.getCrimeType());
         dateOfCrimeTextView.setText(userData.getCrimeDate());
-        suspectOfCrimeTextView.setText(userData.getCrimePerson());
+        if (!userData.isYesButtonSelected()){
+            suspectOfCrimeTextView.setText("Unknown");
+            userData.setCrimePerson(suspectOfCrimeTextView.getText().toString());
+        } else {
+            suspectOfCrimeTextView.setText(userData.getCrimePerson());
+        }
         int numberOfImages = userData.getSelectedImageUrls().size();
         evidencesOfCrimeTextView.setText(numberOfImages + " images");
         // Set the text programmatically
@@ -309,6 +350,13 @@ public class Step3Fragment extends Fragment {
 
     private void sendReport() throws ParseException {
         // Retrieve user ID from the intent or wherever you store it
+        progressBar.setVisibility(View.VISIBLE); // Show the progress bar
+        progressBar.setIndeterminate(true); // Set the ProgressBar to indeterminate mode
+        progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(requireContext(), R.color.white), PorterDuff.Mode.SRC_IN); // Set the color of the ProgressBar
+        // Disable the button
+        btnSendReport.setEnabled(false);
+        btnSendReport.setText("");
+        // Retrieve user ID from the intent or wherever you store it
         final String user_id = "9183797"; // Replace with the actual user ID
         final String crime_type = userData.getCrimeType();
         final String crime_person = userData.getCrimePerson();
@@ -318,8 +366,22 @@ public class Step3Fragment extends Fragment {
         SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         Date parsedDate = inputDateFormat.parse(crime_date); // Parse the input date
         String formattedDate = dbDateFormat.format(parsedDate); // Format to yyyy-MM-dd
-        String inputTime = userData.getCrimeHour() + ":" + userData.getCrimeMinute() + ":00";
-        java.sql.Time crime_time = java.sql.Time.valueOf(inputTime);
+
+        int hour = userData.getCrimeHour();
+        String timeIndicator = userData.getCrimeTimeIndication();
+
+        if ("PM".equals(timeIndicator) && hour != 12) {
+            hour += 12;
+        } else if (!"PM".equals(timeIndicator) && hour == 12) {
+            hour = 0; // Midnight
+        }
+
+        int minute = userData.getCrimeMinute();
+
+// Construct the time in HH:MM format for storage in the database
+        String formattedTime = String.format(Locale.US, "%02d:%02d", hour, minute);
+
+        final String crime_barangay = userData.getSelectedBarangay();
         final String crime_location = userData.getCrimeExactLocation();
         final Double crime_locationLatitude = userData.getCrimeLatitude();
         final Double crime_locationLongitude = userData.getCrimeLongitude();
@@ -331,21 +393,26 @@ public class Step3Fragment extends Fragment {
         final String crime_user_sex = userData.getUserSex();
         final String crime_user_phone = userData.getUserPhone();
         final String crime_user_email = userData.getUserEmail();
+        final boolean switchStatus = userData.isLocationEnabled();
+        final boolean isIdentified = userData.isYesButtonSelected();
 
-        Log.e("Step3Fragment", "sendReport - userId" + user_id);
-        Log.e("Step3Fragment", "sendReport - crime_type" + crime_type);
-        Log.e("Step3Fragment", "sendReport - crime_person" + crime_person);
-        Log.e("Step3Fragment", "sendReport - crime_date" + formattedDate);
-        Log.e("Step3Fragment", "sendReport - crime_time" + crime_time);
-        Log.e("Step3Fragment", "sendReport - crime_location" + crime_location);
-        Log.e("Step3Fragment", "sendReport - crime_locationLatitude" + crime_location_latitude);
-        Log.e("Step3Fragment", "sendReport - crime_locationLongitude" + crime_location_longitude);
-        Log.e("Step3Fragment", "sendReport - crime_description" + crime_description);
+        Log.e("Step3Fragment", "sendReport - userId: " + user_id);
+        Log.e("Step3Fragment", "sendReport - crime_type: " + crime_type);
+        Log.e("Step3Fragment", "sendReport - crime_person: " + crime_person);
+        Log.e("EditReportStep3Fragment", "sendReport - isIdentified: " + isIdentified);
+        Log.e("Step3Fragment", "sendReport - crime_date: " + formattedDate);
+        Log.e("Step3Fragment", "sendReport - crime_time: " + formattedTime);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_barangay: " + crime_barangay);
+        Log.e("EditReportStep3Fragment", "sendReport - switchStatus: " + switchStatus);
+        Log.e("Step3Fragment", "sendReport - crime_location: " + crime_location);
+        Log.e("Step3Fragment", "sendReport - crime_locationLatitude: " + crime_location_latitude);
+        Log.e("Step3Fragment", "sendReport - crime_locationLongitude: " + crime_location_longitude);
+        Log.e("Step3Fragment", "sendReport - crime_description: " + crime_description);
 
-        Log.e("Step3Fragment", "sendReport - crime_userName" + crime_user_name);
-        Log.e("Step3Fragment", "sendReport - crime_userSex" + crime_user_sex);
-        Log.e("Step3Fragment", "sendReport - crime_userPhone" + crime_user_phone);
-        Log.e("Step3Fragment", "sendReport - crime_userEmail" + crime_user_email);
+        Log.e("Step3Fragment", "sendReport - crime_userName: " + crime_user_name);
+        Log.e("Step3Fragment", "sendReport - crime_userSex: " + crime_user_sex);
+        Log.e("Step3Fragment", "sendReport - crime_userPhone: " + crime_user_phone);
+        Log.e("Step3Fragment", "sendReport - crime_userEmail: " + crime_user_email);
 
         new Thread(new Runnable() {
             @Override
@@ -358,8 +425,11 @@ public class Step3Fragment extends Fragment {
                     jsonObject.put("user_id", user_id);
                     jsonObject.put("crime_type", crime_type);
                     jsonObject.put("crime_person", crime_person);
+                    jsonObject.put("isIdentified", isIdentified);
                     jsonObject.put("crime_date", formattedDate);
-                    jsonObject.put("crime_time", crime_time);
+                    jsonObject.put("crime_time", formattedTime);
+                    jsonObject.put("crime_barangay", crime_barangay);
+                    jsonObject.put("isUseCurrentLocation", switchStatus);
                     jsonObject.put("crime_location", crime_location);
                     jsonObject.put("crime_description", crime_description);
                     jsonObject.put("crime_location_latitude", crime_location_latitude);
@@ -418,6 +488,7 @@ public class Step3Fragment extends Fragment {
                             @Override
                             public void run() {
                                 Toast.makeText(requireContext(), "Crime reported successfully", Toast.LENGTH_SHORT).show();
+                                summaryDialog.dismiss();
                             }
                         });
                     } else {
@@ -525,10 +596,10 @@ public class Step3Fragment extends Fragment {
         animator.start();
     }
 
-    private class RetrieveUserDetailsTask extends AsyncTask<String, Void, UserDetails> {
+    private class RetrieveUserDetailsTask extends AsyncTask<String, Void, UserData> {
 
         @Override
-        protected UserDetails doInBackground(String... params) {
+        protected UserData doInBackground(String... params) {
             String serverUrl = params[0];
             String userId = params[1];
 
@@ -560,7 +631,11 @@ public class Step3Fragment extends Fragment {
                     String phone = jsonObject.getString("phone");
                     String gender = jsonObject.getString("gender");
 
-                    return new UserDetails(firstName, lastName, email, phone, gender);
+                    userData.setUserFirstName(firstName);
+                    userData.setUserLastName(lastName);
+                    userData.setUserSex(gender);
+                    userData.setUserPhone(phone);
+                    userData.setUserEmail(email);
                 }
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
@@ -569,16 +644,16 @@ public class Step3Fragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(UserDetails userDetails) {
-            if (userDetails != null) {
+        protected void onPostExecute(UserData result) {
+            if (userData != null) {
                 // Set the user details in the EditText fields
-                firstNameEditText.setText(userDetails.getFirstName());
-                lastNameEditText.setText(userDetails.getLastName());
-                emailEditText.setText(userDetails.getEmail());
-                phoneEditText.setText(userDetails.getPhone());
+                firstNameEditText.setText(userData.getUserFirstName());
+                lastNameEditText.setText(userData.getUserLastName());
+                emailEditText.setText(userData.getUserEmail());
+                phoneEditText.setText(userData.getUserPhone());
 
                 // Set the gender button based on the fetched gender
-                String gender = userDetails.getGender();
+                String gender = userData.getUserSex();
                 if ("Male".equalsIgnoreCase(gender)) {
                     // Set Male button as selected
                     maleButton.setBackgroundResource(R.drawable.yes_toggle_background);
@@ -596,8 +671,11 @@ public class Step3Fragment extends Fragment {
                     maleButton.setBackgroundResource(R.drawable.button_selector);
                     maleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
                 }
+            } else {
+                Log.e("Step3Fragment", "RetrieveUserDetailsTask - userData is null");
             }
         }
+
 
     }
 

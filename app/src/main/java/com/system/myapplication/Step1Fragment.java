@@ -49,6 +49,8 @@ public class Step1Fragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_step1, container, false);
 
+        Log.e("Step1Fragment", "You are in Step1Fragment");
+
         crimeRadioGroup = view.findViewById(R.id.crimeRadioGroup);
         crimeRadioGroupLayout = view.findViewById(R.id.crimeRadioGroupLayout);
         customErrorMessageView = view.findViewById(R.id.customErrorMessage);

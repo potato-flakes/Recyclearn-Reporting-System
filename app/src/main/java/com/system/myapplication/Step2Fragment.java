@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.Manifest;
@@ -157,6 +158,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private EditText minuteEditText;
     private EditText enterPersonEditTexts;
     private boolean isLocationSet;
+    private boolean isAffectedByOtherFunction;
     private Marker userMarker;
     private Switch setLocationButton;
     private ProgressBar progressBar;
@@ -201,6 +203,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_step2, container, false);
+
+        Log.e("Step1Fragment", "You are in Step2Fragment");
 
         descriptionEditText = view.findViewById(R.id.descriptionEditText);
         textViewValue = view.findViewById(R.id.textViewValue);
@@ -502,7 +506,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
-
         imageUrls = new ArrayList<>();
         loadUserData();
         loadUserLocation();
@@ -582,7 +585,9 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                     userData.setLocationEnabled(isChecked);
                     // If the switch is turned off, reset the location flag
                     isLocationSet = false;
-                    removeUserMarker();
+                    if (!isAffectedByOtherFunction){
+                        removeUserMarker();
+                    }
                     stopLocationUpdates();
                     Log.d("MainActivity", "setLocationButton - Switch Button was turned OFF");
                 }
@@ -617,7 +622,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             @Override
             public void onClick(View v) {
                 saveUserData();
-                // Navigate to the next fragment (Step3Fragment)
+                // Navigate to the next fragment (EditReportStep3Fragment)
                 ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
             }
 
@@ -1115,7 +1120,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
 
             String storeImages = userData.getSelectedImageUrls().toString();
-            if (storeImages != null){
+            if (storeImages != null) {
                 displayImages();
             }
 
@@ -1180,6 +1185,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     }
 
     public void handleLocation(double passLatitude, double passLongitude) {
+        Log.e("Step2Fragment","handleLocation - is location enabled in step2" + userData.isLocationEnabled());
         removeUserMarker();
         // Reverse geocode the latitude and longitude to get the location address
         Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
@@ -1211,6 +1217,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 gifTextView.setVisibility(View.GONE);
                 // Update the flag to indicate that the location is set
                 isLocationSet = true;
+
+                if (!userData.isLocationEnabled()){
+                    setLocationButton.setChecked(false);
+                    isAffectedByOtherFunction = true;
+                    Log.e("Step2Fragment", "isLocationEnabled in Step2Fragment: " + userData.isLocationEnabled());
+                }
                 stopLocationUpdates();
             }
         } catch (IOException e) {
@@ -1419,7 +1431,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         }
 
         // Create a new instance of the LocationBottomSheetFragment
-        LocationBottomSheetFragment fragment = LocationBottomSheetFragment.newInstance(latitude, longitude);
+        LocationBottomSheetFragment fragment = LocationBottomSheetFragment.newInstance(userData, latitude, longitude);
         Log.d("MainActivity", "showLocationBottomSheet - New value of Latitudess :" + latitude);
         Log.d("MainActivity", "showLocationBottomSheet - New value of Longitudes :" + longitude);
         // Set the LocationSelectionListener on the fragment (which is MainActivity)
@@ -1454,7 +1466,48 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 barangaySpinner.setText(selectedBarangay);
                 userData.setSelectedBarangay(barangaySpinner.getText().toString());
                 Log.d("MainActivity", "showBottomSheetDialog - Chosen Barangay :" + barangaySpinner);
+                userData.setLocationEnabled(false);
+                setLocationButton.setChecked(false);
+                isAffectedByOtherFunction = true;
                 bottomSheetDialog.dismiss(); // Dismiss the bottom sheet dialog
+
+                if (!selectedBarangay.isEmpty()) {
+                    Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+                    try {
+                        List<Address> addresses = geocoder.getFromLocationName(selectedBarangay + ", Lubao, Pampanga, Philippines", 1);
+                        if (addresses != null && addresses.size() > 0) {
+                            Address address = addresses.get(0);
+                            latitude = address.getLatitude();
+                            longitude = address.getLongitude();
+                            // Clear previous markers from the map
+                            mapView.getOverlays().clear();
+
+                            // Update the map view to the searched location
+                            mapView.getController().animateTo(new GeoPoint(latitude, longitude));
+                            saveCoordinates(latitude, longitude);
+
+                            // Add a marker at the searched location
+                            userMarker = new Marker(mapView);
+                            userMarker.setPosition(new GeoPoint(latitude, longitude));
+                            mapView.getOverlays().add(userMarker);
+
+                            // Update the locationTextView with the searched address
+                            locationTextView.setText(address.getAddressLine(0));
+                            userData.setCrimeExactLocation(locationTextView.getText().toString());
+                            // Animate to the searched location with zoom
+                            final double zoomLevel = 13.5; // Set your desired zoom level as a double
+                            mapView.getController().setZoom(zoomLevel);
+
+                            Log.d("LocationBottomSheet", "Location searched: " + address.getAddressLine(0));
+                        } else {
+                            // Display a message that the searched location is not found
+                            Toast.makeText(requireContext(), "Location not found", Toast.LENGTH_SHORT).show();
+                            Log.d("LocationBottomSheet", "Location not found");
+                        }
+                    } catch (IOException e) {
+                        Log.e("SearchError", "Error performing search: " + e.getMessage());
+                    }
+                }
             }
         });
 
@@ -1749,7 +1802,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     @Override
     public void onResume() {
         super.onResume();
-        // Update the button UI based on the stored value in UserData
         updateButtonUI();
     }
 
@@ -1764,7 +1816,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
         Log.d("MainActivity", "uploadImagesToServer - has started");
         RequestQueue queue = Volley.newRequestQueue(requireContext());
-        String url = "http://192.168.12.219/recyclearn/report_user/upload.php";
+        String url = "http://192.168.1.10/recyclearn/report_user/upload.php";
         boolean success = true;
         final AtomicInteger uploadCounter = new AtomicInteger(0);
         for (final String imageUrl : imageUrls) {
@@ -1870,7 +1922,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                             .centerCrop()
                             .into(imageView);
 
-                    // Create a new ImageView for the delete button
+// Create a new ImageView for the delete button
                     ImageView deleteButton = new ImageView(requireActivity());
                     FrameLayout.LayoutParams deleteButtonParams = new FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -1880,14 +1932,19 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                     deleteButton.setLayoutParams(deleteButtonParams);
                     deleteButton.setImageResource(R.drawable.ic_image_delete); // Set your delete icon drawable here
 
+                    final int imageIndex = userData.getSelectedImageUrls().indexOf(imageUrl); // Get the index of the image to delete
+
 // Set a click listener for the delete button
                     deleteButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            // Remove the image URL from the list
-                            imageUrls.remove(imageUrl);
-                            // Redisplay the updated images
-                            displayImages();
+                            // Check if the image index is valid
+                            if (imageIndex >= 0 && imageIndex < userData.getSelectedImageUrls().size()) {
+                                // Remove the image URL from the list using the index
+                                userData.getSelectedImageUrls().remove(imageIndex);
+                                // Redisplay the updated images
+                                displayImages();
+                            }
                         }
                     });
 

@@ -18,4 +18,7 @@
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:background">@drawable/dialog_background</item> <!-- Replace with your dialog background drawable -->
     </style>
+    <style name="PopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/custom_popup_background</item>
+    </style>
 </resources>

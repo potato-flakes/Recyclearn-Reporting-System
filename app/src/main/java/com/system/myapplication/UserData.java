@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserData {
+    private String report_id;
     private String crimeType;
     private boolean isYesButtonSelected = true;
     private boolean locationEnabled;
+    private boolean dataFetched;
     private String crimePerson;
     private String crimeDate;
     private String crimeTime;
@@ -176,5 +178,56 @@ public class UserData {
 
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+    public boolean isDataFetched() {
+        return dataFetched;
+    }
+
+    public void setDataFetched(boolean dataFetched) {
+        this.dataFetched = dataFetched;
+    }
+
+    public String getReportID() {
+        return report_id;
+    }
+    public void setReportID(String report_id) {
+        this.report_id = report_id;
+    }
+    private ArrayList<String> existingImageUrls;
+    private List<String> deletedImageUrls;
+    private ArrayList<String> newImageUrls;
+
+    public UserData() {
+        // Initialize your lists here if needed
+        existingImageUrls = new ArrayList<>();
+        deletedImageUrls = new ArrayList<>();
+        newImageUrls = new ArrayList<>();
+    }
+
+    // Getters and setters for existingImageUrls
+    public ArrayList<String> getExistingImageUrls() {
+        return existingImageUrls;
+    }
+
+    public void setExistingImageUrls(ArrayList<String> existingImageUrls) {
+        this.existingImageUrls = existingImageUrls;
+    }
+
+    // Getters and setters for deletedImageUrls
+    public List<String> getDeletedImageUrls() {
+        return deletedImageUrls;
+    }
+
+    public void setDeletedImageUrls(List<String> deletedImageUrls) {
+        this.deletedImageUrls = deletedImageUrls;
+    }
+
+    // Getters and setters for newImageUrls
+    public ArrayList<String> getNewImageUrls() {
+        return newImageUrls;
+    }
+
+    public void setNewImageUrls(ArrayList<String> newImageUrls) {
+        this.newImageUrls = newImageUrls;
     }
 }

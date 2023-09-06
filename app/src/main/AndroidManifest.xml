@@ -15,11 +15,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication"
+        android:theme="@style/Theme.Content"
         tools:targetApi="31">
         <activity
             android:name=".ReportActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Home">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,7 +28,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".createReport_activity"></activity>
-        <activity android:name=".EditReportActivity"></activity>
+        <activity android:name=".editReport_activity"></activity>
 
     </application>
 

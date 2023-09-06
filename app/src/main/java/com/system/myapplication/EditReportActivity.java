@@ -56,6 +56,7 @@ public class EditReportActivity extends AppCompatActivity {
     private EditText datetimeEditText;
     private Button saveButton;
     private List<String> imageUrls = new ArrayList<>();
+
     private List<String> ReUploadImageUrls = new ArrayList<>();
     private List<String> deletedImageUrls = new ArrayList<>();
     private List<String> newImageUrls = new ArrayList<>();
@@ -132,7 +133,7 @@ public class EditReportActivity extends AppCompatActivity {
                 // Return the Report object with the retrieved details
 
                 // Example of retrieving report details from the server
-                String apiUrl = "http://192.168.1.6/recyclearn/report_user/get_report_details.php?reportId=" + reportId;
+                String apiUrl = "http://192.168.1.10/recyclearn/report_user/get_report_details.php?reportId=" + reportId;
 
                 // Perform the HTTP request and retrieve the response
                 String jsonResponse = performHttpRequest(apiUrl);
@@ -141,11 +142,12 @@ public class EditReportActivity extends AppCompatActivity {
                 Report report = null;
                 try {
                     JSONObject jsonObject = new JSONObject(jsonResponse);
-                    String description = jsonObject.getString("description");
-                    String location = jsonObject.getString("location");
-                    String date = jsonObject.getString("date");
-                    String time = jsonObject.getString("time");
-                    report = new Report(reportId, description, location, date, time);
+                    String user_id = jsonObject.getString("report_id");
+                    String description = jsonObject.getString("crime_type");
+                    String location = jsonObject.getString("crime_location");
+                    String date = jsonObject.getString("crime_date");
+                    String time = jsonObject.getString("crime_time");
+                    report = new Report(reportId, user_id, description, location, date, time);
 
                     if (jsonObject.has("imagePaths")) {
                         Log.d("Retrieve JSON Response", jsonObject.toString()); // Debug log to check the JSON response
@@ -153,7 +155,7 @@ public class EditReportActivity extends AppCompatActivity {
                         JSONArray imagePathsArray = jsonObject.getJSONArray("imagePaths");
                         for (int i = 0; i < imagePathsArray.length(); i++) {
                             String imagePath = imagePathsArray.getString(i);
-                            String imageUrl = "http://192.168.1.6/recyclearn/report_user/images/" + imagePath; // Modify the URL as per your server setup
+                            String imageUrl = "http://192.168.1.10/recyclearn/report_user/images/" + imagePath; // Modify the URL as per your server setup
                             report.addImageUrl(imageUrl);
                             Log.d("Retrieved Images: ", imagePath); // Debug log to check the JSON response
                         }
@@ -231,7 +233,7 @@ public class EditReportActivity extends AppCompatActivity {
                 // Make an HTTP request to the server with the updated details and image URLs
 
                 // Example of updating report details on the server
-                String apiUrl = "http://192.168.1.6/recyclearn/report_user/update_report.php";
+                String apiUrl = "http://192.168.1.10/recyclearn/report_user/update_report.php";
 
                 // Create a JSON object with the updated details and image URLs
                 JSONObject jsonParams = new JSONObject();
@@ -269,7 +271,7 @@ public class EditReportActivity extends AppCompatActivity {
     }
     private boolean uploadImagesToServer() {
         RequestQueue queue = Volley.newRequestQueue(Objects.requireNonNull(getApplicationContext()));
-        String url = "http://192.168.1.6/recyclearn/report_user/upload.php";
+        String url = "http://192.168.1.10/recyclearn/report_user/upload.php";
         boolean success = true;
         final AtomicInteger uploadCounter = new AtomicInteger(0);
         for (final String imageUrl : newImageUrls) {

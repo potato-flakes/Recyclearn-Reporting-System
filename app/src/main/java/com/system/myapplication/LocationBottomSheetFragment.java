@@ -58,9 +58,16 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
     private double longitude;
     private Geocoder geocoder;
     private String selectedSuggestion;
+    // Declare a member variable to hold the userData
+    private UserData userData;
 
-    public static LocationBottomSheetFragment newInstance(double latitude, double longitude) {
-        LocationBottomSheetFragment fragment = new LocationBottomSheetFragment();
+    // Constructor that accepts userData
+    public LocationBottomSheetFragment(UserData userData) {
+        this.userData = userData;
+    }
+
+    public static LocationBottomSheetFragment newInstance(UserData userData, double latitude, double longitude) {
+        LocationBottomSheetFragment fragment = new LocationBottomSheetFragment(userData);
         Bundle args = new Bundle();
         args.putDouble("latitude", latitude);
         args.putDouble("longitude", longitude);
@@ -292,7 +299,6 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
     }
 
     private void performSave() {
-
         // Retrieve the updated latitude and longitude values
         double passLatitude = latitude;
         double passLongitude = longitude;
@@ -301,6 +307,8 @@ public class LocationBottomSheetFragment extends BottomSheetDialogFragment {
             // Notify the listener with the updated location
         // Notify the listener with the updated location
         if (locationSelectionListener != null) {
+            userData.setLocationEnabled(false);
+            Log.e("LocationBottomSheetFragment", "isLocationEnabled: " + userData.isLocationEnabled());
             locationSelectionListener.handleLocation(passLatitude, passLongitude);
             Log.e("LocationBottomSheetFragment", "Updated Latitudes: " + passLatitude);
             Log.e("LocationBottomSheetFragment", "Updated Longitudes: " + passLongitude);

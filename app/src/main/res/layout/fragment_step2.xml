@@ -705,21 +705,24 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="wrap_content"
                         android:layout_alignParentBottom="true"
                         android:background="#80000000"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:gravity="center_horizontal">
 
                         <TextView
                             android:id="@+id/locationTextView"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
                             android:fontFamily="@font/poppinsmedium"
                             android:padding="10dp"
                             android:text="Your Current Location"
                             android:textColor="#FFFFFF"
-                            android:textSize="10dp" />
+                            android:textSize="10dp"
+                            android:textAlignment="textStart"
+                           android:gravity="center_vertical" />
 
                         <Button
                             android:id="@+id/viewMapsButton"
@@ -730,9 +733,11 @@
                             android:paddingLeft="30dp"
                             android:text=">"
                             android:textColor="#FFFFFF"
-                            android:textSize="18dp" />
+                            android:textSize="18dp"
+                            />
 
                     </LinearLayout>
+
 
                 </RelativeLayout>
 
