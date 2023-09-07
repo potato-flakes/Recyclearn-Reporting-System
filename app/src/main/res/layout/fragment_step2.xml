@@ -721,7 +721,6 @@
                             android:text="Your Current Location"
                             android:textColor="#FFFFFF"
                             android:textSize="10dp"
-                            android:textAlignment="textStart"
                            android:gravity="center_vertical" />
 
                         <Button

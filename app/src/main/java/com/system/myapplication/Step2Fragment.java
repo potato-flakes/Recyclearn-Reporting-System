@@ -114,7 +114,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private List<String> imageUrls = new ArrayList<>();
     private static final int RESULT_OK = Activity.RESULT_OK;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
-    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/report.php";
+    private static final String API_URL = "http://192.168.117.158/recyclearn/report_user/report.php";
     private TextInputLayout textInputLayoutPersonName;
     private TextInputLayout barangayTextInputLayout;
     private LinearLayout imageContainer;
@@ -565,7 +565,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
         barangaySpinner.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v)  {
                 showBottomSheetDialog();
             }
         });
@@ -1816,7 +1816,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
         Log.d("MainActivity", "uploadImagesToServer - has started");
         RequestQueue queue = Volley.newRequestQueue(requireContext());
-        String url = "http://192.168.1.10/recyclearn/report_user/upload.php";
+        String url = "http://192.168.117.158/recyclearn/report_user/upload.php";
         boolean success = true;
         final AtomicInteger uploadCounter = new AtomicInteger(0);
         for (final String imageUrl : imageUrls) {

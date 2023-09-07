@@ -6,10 +6,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -33,11 +35,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class ReportActivity extends AppCompatActivity {
+    private LinearLayout chat_button;
     private RecyclerView recyclerView;
     private ReportAdapter reportAdapter;
     private List<Report> reportList;
-    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/get_reports.php?user_id=";
-    private static final String DELETE_API_URL = "http://192.168.1.10/recyclearn/report_user";
+    private TextView reportUserName;
+    private Report report;
+    private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/get_reports.php?user_id=";
+    private static final String DELETE_API_URL = "http://192.168.1.6/recyclearn/report_user";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +54,8 @@ public class ReportActivity extends AppCompatActivity {
         reportList = new ArrayList<>();
         reportAdapter = new ReportAdapter(reportList);
         recyclerView.setAdapter(reportAdapter);
+        reportUserName = findViewById(R.id.reportUserName);
+        chat_button = findViewById(R.id.chat_button);
 
         // Set item click listener
         reportAdapter.setOnItemClickListener(new ReportAdapter.OnItemClickListener() {
@@ -60,7 +67,15 @@ public class ReportActivity extends AppCompatActivity {
                 // Pass the report ID or other identifier as an intent extra
             }
         });
-
+        chat_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Open the MainActivity to create a new report
+                Intent intent = new Intent(ReportActivity.this, ChatActivity.class);
+                startActivity(intent);
+                Log.d("Button", "Chat Button was clicked"); // Log the image URL
+            }
+        });
         // Set menu button click listener
         reportAdapter.setOnMenuClickListener(new ReportAdapter.OnMenuClickListener() {
             @Override
@@ -84,7 +99,7 @@ public class ReportActivity extends AppCompatActivity {
             @Override
             public void onEditClick(int position) {
                 // Handle edit click here
-                Report report = reportList.get(position);
+                report = reportList.get(position);
                 String reportId = report.getReportId();
 
                 // Start a new activity to edit the report details
@@ -291,12 +306,17 @@ public class ReportActivity extends AppCompatActivity {
 
                 String report_id = jsonObject.getString("report_id"); // Correctly extract the report_id
                 String user_id = jsonObject.getString("user_id"); // Use "id" instead of "reportId"
+                String firstname = jsonObject.getString("firstname"); // Use "id" instead of "reportId"
+                String lastname = jsonObject.getString("lastname"); // Use "id" instead of "reportId"
                 String description = jsonObject.getString("crime_type");
                 String location = jsonObject.getString("crime_location");
                 String date = jsonObject.getString("crime_date");
                 String time = jsonObject.getString("crime_time");
 
-                Report report = new Report(report_id, user_id, description, location, date, time);
+                Report report = new Report(report_id, user_id, firstname, lastname, description, location, date, time);
+                String lastName = "<b>" + report.getLastname() + "</b>";
+                reportUserName.setText(Html.fromHtml("Hello, " + lastName + "!"));
+
                 reportList.add(report);
             }
 

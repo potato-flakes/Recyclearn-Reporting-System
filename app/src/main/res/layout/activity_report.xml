@@ -37,27 +37,58 @@
                 android:background="@color/colorPrimary"
                 android:elevation="2dp" /> <!-- Set the desired opacity (0.0 to 1.0) -->
 
+            <!-- Toolbar for back button and notification icon -->
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:elevation="10dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:layout_gravity="top">
+
+                <!-- Back button -->
+                <ImageButton
+                    android:id="@+id/backButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="11dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_back" />
+
+                <!-- Notification icon -->
+                <ImageButton
+                    android:id="@+id/notificationButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:elevation="1dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_notification" />
+            </androidx.appcompat.widget.Toolbar>
+
             <!-- Existing header layout -->
             <RelativeLayout
                 android:id="@+id/mainLinearLayout"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
+                android:layout_height="match_parent"
+                android:layout_margin="20dp"
+                android:paddingTop="40dp"
                 android:elevation="3dp"
                 android:gravity="center">
 
                 <TextView
-                    android:id="@+id/textView"
+                    android:id="@+id/reportUserName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="20dp"
-                    android:fontFamily="@font/poppinsbold"
-                    android:text="Citzen Reporting"
-                    android:textAlignment="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:text="Hello, User!"
                     android:textColor="@color/white"
-                    android:textSize="24sp" />
-
+                    android:textSize="23sp" />
             </RelativeLayout>
         </FrameLayout>
+
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -120,22 +151,22 @@
         android:layout_marginBottom="-40dp"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
+        app:layout_constraintBottom_toTopOf="@id/coordinatorLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintVertical_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/mainContainer"
-        app:layout_constraintBottom_toTopOf="@id/coordinatorLayout" />
+        app:layout_constraintVertical_bias="1.0" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/coordinatorLayout"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        app:layout_constraintBottom_toBottomOf="@id/parent"
         android:layout_marginBottom="0dp"
+        android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="@id/parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:elevation="10dp">
+        app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.bottomappbar.BottomAppBar
             android:id="@+id/app_bar"
@@ -150,13 +181,13 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:baselineAligned="false"
-                android:orientation="horizontal"
+                android:layout_marginLeft="-15dp"
                 android:layout_marginRight="15dp"
-                android:layout_marginLeft="-15dp">
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
                 <LinearLayout
-                    android:id="@+id/home_button"
+                    android:id="@+id/chat_button"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="0.2"

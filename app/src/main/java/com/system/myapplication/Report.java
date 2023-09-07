@@ -8,6 +8,8 @@ import java.util.List;
 public class Report {
     private String report_id;
     private String user_id;
+    private String firstname;
+    private String lastname;
     private String description;
     private String location;
     private String date;
@@ -15,9 +17,11 @@ public class Report {
     private List<String> imageUrls;
     private List<String> imagePaths; // Ad
 
-    public Report(String report_id, String user_id, String description, String location, String date, String time) {
+    public Report(String report_id, String user_id, String firstname, String lastname, String description, String location, String date, String time) {
         this.report_id = report_id;
         this.user_id = user_id;
+        this.firstname = firstname;
+        this.lastname = lastname;
         this.description = description;
         this.location = location;
         this.date = date;
@@ -33,6 +37,12 @@ public class Report {
 
     public String getUserId() {
         return user_id;
+    }
+    public String getFirstname() {
+        return firstname;
+    }
+    public String getLastname() {
+        return lastname;
     }
 
     public String getDescription() {

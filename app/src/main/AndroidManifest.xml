@@ -28,6 +28,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".createReport_activity"></activity>
+        <activity android:name=".ChatActivity"></activity>
         <activity android:name=".editReport_activity"></activity>
 
     </application>

@@ -90,7 +90,7 @@ public class Step3Fragment extends Fragment {
     private AlertDialog summaryDialog;
     private Button btnCancelReport;
     private Button btnSendReport;
-    private static final String API_URL = "http://192.168.1.10/recyclearn/report_user/report.php";
+    private static final String API_URL = "http://192.168.117.158/recyclearn/report_user/report.php";
     private Handler handler = new Handler();
     private List<String> imageUrls = new ArrayList<>();
     private boolean dataFetched = false;
@@ -123,7 +123,7 @@ public class Step3Fragment extends Fragment {
         nextButton = view.findViewById(R.id.nextButton);
 
         // Replace "your-server-url.com" with the actual URL of your server and PHP script
-        String serverUrl = "http://192.168.1.10/recyclearn/report_user/get_user_details.php";
+        String serverUrl = "http://192.168.117.158/recyclearn/report_user/get_user_details.php";
         String userId = "5320007"; // Replace this with the actual user ID you want to fetch
 
         // Find the Yes and No buttons
@@ -283,14 +283,14 @@ public class Step3Fragment extends Fragment {
         // Set the text programmatically
         descOfCrimeEditText.setText(userData.getCrimeDescription());
 
-// Disable text editing
+        // Disable text editing
         descOfCrimeEditText.setFocusable(false);
         descOfCrimeEditText.setFocusableInTouchMode(false);
 
-// Prevent keyboard input
+        // Prevent keyboard input
         descOfCrimeEditText.setKeyListener(null);
 
-// Enable scrolling
+        // Enable scrolling
         descOfCrimeEditText.setVerticalScrollBarEnabled(true);
         descOfCrimeEditText.setMovementMethod(new ScrollingMovementMethod());
         // Set text in TextViews with user data
@@ -521,7 +521,7 @@ public class Step3Fragment extends Fragment {
     private void uploadImagesToServer(final List<String> imageUrls, final String report_id) {
         Log.d("MainActivity", "uploadImagesToServer - has started");
         RequestQueue queue = Volley.newRequestQueue(requireContext());
-        String url = "http://192.168.1.10/recyclearn/report_user/upload.php";
+        String url = "http://192.168.117.158/recyclearn/report_user/upload.php";
         final AtomicInteger uploadCounter = new AtomicInteger(0);
 
         for (final String imageUrl : imageUrls) {
