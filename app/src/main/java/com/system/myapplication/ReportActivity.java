@@ -41,8 +41,8 @@ public class ReportActivity extends AppCompatActivity {
     private List<Report> reportList;
     private TextView reportUserName;
     private Report report;
-    private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/get_reports.php?user_id=";
-    private static final String DELETE_API_URL = "http://192.168.1.6/recyclearn/report_user";
+    private static final String API_URL = "http://192.168.158.229/recyclearn/report_user/get_reports.php?user_id=";
+    private static final String DELETE_API_URL = "http://192.168.158.229/recyclearn/report_user";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

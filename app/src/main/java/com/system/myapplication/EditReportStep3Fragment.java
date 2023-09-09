@@ -42,6 +42,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -64,7 +65,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Step3Fragment extends Fragment {
+public class EditReportStep3Fragment extends Fragment {
 
     private TextView typeOfCrimeTextView;
     private TextView dateOfCrimeTextView;
@@ -82,7 +83,6 @@ public class Step3Fragment extends Fragment {
     private EditText phoneEditText;
     private Button maleButton;
     private Button femaleButton;
-    private String selectedGender;
     private Button nextButton;
     private UserData userData;
     private RelativeLayout backButtonToF1;
@@ -90,10 +90,18 @@ public class Step3Fragment extends Fragment {
     private AlertDialog summaryDialog;
     private Button btnCancelReport;
     private Button btnSendReport;
-    private static final String API_URL = "http://192.168.158.229/recyclearn/report_user/report.php";
+    private static final String API_URL = "http://192.168.158.229/recyclearn/report_user/update_report.php";
     private Handler handler = new Handler();
     private List<String> imageUrls = new ArrayList<>();
     private boolean dataFetched = false;
+    // Access existingImageUrls from UserData
+    ArrayList<String> existingUrls;
+
+    // Access deletedImageUrls from UserData
+    private List<String> deletedImageUrls = new ArrayList<>();
+
+    // Access newImageUrls from UserData
+    ArrayList<String> newUrls;
     private ProgressBar progressBar;
 
     public void setUserData(UserData userData) {
@@ -101,7 +109,7 @@ public class Step3Fragment extends Fragment {
     }
 
 
-    public Step3Fragment() {
+    public EditReportStep3Fragment() {
         // Required empty public constructor
     }
 
@@ -114,7 +122,7 @@ public class Step3Fragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Log.e("Step1Fragment", "You are in Step3Fragment");
+        Log.e("EditReportStep3Fragment", "You are in EditReportStep3Fragment");
 
         firstNameEditText = view.findViewById(R.id.editTextFirstName);
         lastNameEditText = view.findViewById(R.id.editTextLastName);
@@ -123,8 +131,8 @@ public class Step3Fragment extends Fragment {
         nextButton = view.findViewById(R.id.nextButton);
 
         // Replace "your-server-url.com" with the actual URL of your server and PHP script
-        String serverUrl = "http://192.168.158.229/recyclearn/report_user/get_user_details.php";
-        String userId = "9183797"; // Replace this with the actual user ID you want to fetch
+        String serverUrl = "http://192.168.100.228/recyclearn/report_user/get_user_details.php";
+        String userId = "5320007"; // Replace this with the actual user ID you want to fetch
 
         // Find the Yes and No buttons
         maleButton = view.findViewById(R.id.maleButton);
@@ -178,52 +186,43 @@ public class Step3Fragment extends Fragment {
             }
         });
 
-        // Check if data has already been fetched using the flag in UserData
-        if (!userData.isDataFetched()) {
-            // Retrieve the user details from the server
-            new RetrieveUserDetailsTask().execute(serverUrl, userId);
-            userData.setDataFetched(true);
-        } else {
-            // Set the user details in the EditText fields
-            firstNameEditText.setText(userData.getUserFirstName());
-            lastNameEditText.setText(userData.getUserLastName());
-            emailEditText.setText(userData.getUserEmail());
-            phoneEditText.setText(userData.getUserPhone());
+        // Set the user details in the EditText fields
+        firstNameEditText.setText(userData.getUserFirstName());
+        lastNameEditText.setText(userData.getUserLastName());
+        emailEditText.setText(userData.getUserEmail());
+        phoneEditText.setText(userData.getUserPhone());
 
-            // Set the gender button based on the fetched gender
-            String sex = userData.getUserSex();
-            if ("Male".equalsIgnoreCase(sex)) {
-                // Set Male button as selected
-                maleButton.setBackgroundResource(R.drawable.yes_toggle_background);
-                maleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+        // Set the gender button based on the fetched gender
+        String sex = userData.getUserSex();
+        if ("Male".equalsIgnoreCase(sex)) {
+            // Set Male button as selected
+            maleButton.setBackgroundResource(R.drawable.yes_toggle_background);
+            maleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
 
-                // Reset Female button
-                femaleButton.setBackgroundResource(R.drawable.button_selector);
-                femaleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-            } else if ("Female".equalsIgnoreCase(sex)) {
-                // Set Female button as selected
-                femaleButton.setBackgroundResource(R.drawable.yes_toggle_background);
-                femaleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+            // Reset Female button
+            femaleButton.setBackgroundResource(R.drawable.button_selector);
+            femaleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
+        } else if ("Female".equalsIgnoreCase(sex)) {
+            // Set Female button as selected
+            femaleButton.setBackgroundResource(R.drawable.yes_toggle_background);
+            femaleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
 
-                // Reset Male button
-                maleButton.setBackgroundResource(R.drawable.button_selector);
-                maleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-            }
+            // Reset Male button
+            maleButton.setBackgroundResource(R.drawable.button_selector);
+            maleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
         }
-        boolean isDataFetched = userData.isDataFetched();
-        Log.e("Step3Fragment","onViewCreated isDataFetched:" + isDataFetched);
 
         Button backButton = view.findViewById(R.id.backButton);
-        // Inside Step2Fragment
+        // Inside EditReportStep2Fragment
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 loadUserInfo();
-                ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step2Fragment());
+                ((editReport_activity) requireActivity()).navigateToPreviousFragment(new EditReportStep2Fragment());
             }
         });
 
-        // Inside Step3Fragment.java
+        // Inside EditReportStep3Fragment.java
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -231,7 +230,9 @@ public class Step3Fragment extends Fragment {
                 showSummaryDialog();
             }
         });
-
+        existingUrls = userData.getExistingImageUrls();
+        newUrls = userData.getNewImageUrls();
+        deletedImageUrls = userData.getDeletedImageUrls();
     }
 
     private void loadUserInfo() {
@@ -266,8 +267,8 @@ public class Step3Fragment extends Fragment {
         phoneTextView = dialogView.findViewById(R.id.phoneTextView);
         emailTextView = dialogView.findViewById(R.id.emailTextView);
         evidencesOfCrimeTextView = dialogView.findViewById(R.id.evidencesOfCrimeTextView);
-        btnCancelReport = dialogView.findViewById(R.id.btnCancelReport);
         progressBar = dialogView.findViewById(R.id.progressBar);
+        btnCancelReport = dialogView.findViewById(R.id.btnCancelReport);
 
         // Set text in TextViews with user data
         typeOfCrimeTextView.setText(userData.getCrimeType());
@@ -283,20 +284,20 @@ public class Step3Fragment extends Fragment {
         // Set the text programmatically
         descOfCrimeEditText.setText(userData.getCrimeDescription());
 
-        // Disable text editing
+// Disable text editing
         descOfCrimeEditText.setFocusable(false);
         descOfCrimeEditText.setFocusableInTouchMode(false);
 
-        // Prevent keyboard input
+// Prevent keyboard input
         descOfCrimeEditText.setKeyListener(null);
 
-        // Enable scrolling
+// Enable scrolling
         descOfCrimeEditText.setVerticalScrollBarEnabled(true);
         descOfCrimeEditText.setMovementMethod(new ScrollingMovementMethod());
         // Set text in TextViews with user data
         nameTextView.setText(userData.getUserFirstName() + " " + userData.getUserLastName());
         sexTextView.setText(userData.getUserSex());
-        Log.e("Step3Fragment", "showSummaryDialog - Sex:: " + sexTextView);
+        Log.e("EditReportStep3Fragment", "showSummaryDialog - Sex:: " + sexTextView);
         phoneTextView.setText(userData.getUserPhone());
         emailTextView.setText(userData.getUserEmail());
 
@@ -304,8 +305,8 @@ public class Step3Fragment extends Fragment {
         backButtonToF1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Navigate to the previous fragment (Step1Fragment)
-                ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step2Fragment());
+                // Navigate to the previous fragment (EditReportStep1Fragment)
+                ((editReport_activity) requireActivity()).navigateToPreviousFragment(new EditReportStep2Fragment());
                 summaryDialog.dismiss();
                 summaryDialog = null; // Reset the dialog reference
             }
@@ -348,6 +349,7 @@ public class Step3Fragment extends Fragment {
         summaryDialog.show();
     }
 
+
     private void sendReport() throws ParseException {
         // Retrieve user ID from the intent or wherever you store it
         progressBar.setVisibility(View.VISIBLE); // Show the progress bar
@@ -356,7 +358,8 @@ public class Step3Fragment extends Fragment {
         // Disable the button
         btnSendReport.setEnabled(false);
         btnSendReport.setText("");
-        // Retrieve user ID from the intent or wherever you store it
+
+        final String report_id = userData.getReportID();
         final String user_id = "9183797"; // Replace with the actual user ID
         final String crime_type = userData.getCrimeType();
         final String crime_person = userData.getCrimePerson();
@@ -396,23 +399,27 @@ public class Step3Fragment extends Fragment {
         final boolean switchStatus = userData.isLocationEnabled();
         final boolean isIdentified = userData.isYesButtonSelected();
 
-        Log.e("Step3Fragment", "sendReport - userId: " + user_id);
-        Log.e("Step3Fragment", "sendReport - crime_type: " + crime_type);
-        Log.e("Step3Fragment", "sendReport - crime_person: " + crime_person);
+        Log.e("EditReportStep3Fragment", "sendReport - userId: " + user_id);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_type: " + crime_type);
         Log.e("EditReportStep3Fragment", "sendReport - isIdentified: " + isIdentified);
-        Log.e("Step3Fragment", "sendReport - crime_date: " + formattedDate);
-        Log.e("Step3Fragment", "sendReport - crime_time: " + formattedTime);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_person: " + crime_person);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_date: " + formattedDate);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_time: " + formattedTime);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_location: " + crime_location);
         Log.e("EditReportStep3Fragment", "sendReport - crime_barangay: " + crime_barangay);
         Log.e("EditReportStep3Fragment", "sendReport - switchStatus: " + switchStatus);
-        Log.e("Step3Fragment", "sendReport - crime_location: " + crime_location);
-        Log.e("Step3Fragment", "sendReport - crime_locationLatitude: " + crime_location_latitude);
-        Log.e("Step3Fragment", "sendReport - crime_locationLongitude: " + crime_location_longitude);
-        Log.e("Step3Fragment", "sendReport - crime_description: " + crime_description);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_locationLatitude: " + crime_location_latitude);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_locationLongitude: " + crime_location_longitude);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_description: " + crime_description);
 
-        Log.e("Step3Fragment", "sendReport - crime_userName: " + crime_user_name);
-        Log.e("Step3Fragment", "sendReport - crime_userSex: " + crime_user_sex);
-        Log.e("Step3Fragment", "sendReport - crime_userPhone: " + crime_user_phone);
-        Log.e("Step3Fragment", "sendReport - crime_userEmail: " + crime_user_email);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_userName: " + crime_user_name);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_userSex: " + crime_user_sex);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_userPhone: " + crime_user_phone);
+        Log.e("EditReportStep3Fragment", "sendReport - crime_userEmail: " + crime_user_email);
+
+        Log.e("EditReportStep3Fragment", "sendReport - Existing Images: " + existingUrls);
+        Log.e("EditReportStep3Fragment", "sendReport - Deleted Images: " + deletedImageUrls);
+        Log.e("EditReportStep3Fragment", "sendReport - New Images: " + newUrls);
 
         new Thread(new Runnable() {
             @Override
@@ -422,10 +429,11 @@ public class Step3Fragment extends Fragment {
                 try {
                     // Create JSON object with crime data
                     JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("report_id", report_id);
                     jsonObject.put("user_id", user_id);
                     jsonObject.put("crime_type", crime_type);
-                    jsonObject.put("crime_person", crime_person);
                     jsonObject.put("isIdentified", isIdentified);
+                    jsonObject.put("crime_person", crime_person);
                     jsonObject.put("crime_date", formattedDate);
                     jsonObject.put("crime_time", formattedTime);
                     jsonObject.put("crime_barangay", crime_barangay);
@@ -439,6 +447,7 @@ public class Step3Fragment extends Fragment {
                     jsonObject.put("crime_user_sex", crime_user_sex);
                     jsonObject.put("crime_user_phone", crime_user_phone);
                     jsonObject.put("crime_user_email", crime_user_email);
+                    jsonObject.put("deletedImageUrls", new JSONArray(deletedImageUrls));
 
                     Log.d("MainActivity", "reportCrime - Data to be passed: " + jsonObject);
 
@@ -469,28 +478,49 @@ public class Step3Fragment extends Fragment {
                         response = responseBuilder.toString();
 
                         // Parse the response as JSON
-                        JSONObject jsonResponse = new JSONObject(response.toString());
+                        JSONObject jsonResponse = new JSONObject(response);
                         Log.d("MainActivity", "reportCrime - JSON Response - Data upload: " + jsonResponse);
                         // Extract the report ID from the response
-                        String reportId = jsonResponse.getString("reportId");
-                        String message = jsonResponse.getString("message");
-                        Log.d("MainActivity", "reportCrime - Retrieved Report ID from server: " + reportId);
-                        Log.d("MainActivity", "reportCrime - Retrieved Message from server: " + message);
+                        Log.d("MainActivity", "reportCrime - Retrieved Report ID from server: " + report_id);
 
-                        // Inside your sendReport method
-                        uploadImagesToServer(imageUrls, reportId);
+                        // Check if the "deletionStatus" array exists in the response
+                        if (jsonResponse.has("deletionStatus")) {
+                            JSONArray deletionStatusArray = jsonResponse.getJSONArray("deletionStatus");
 
-                        // Inside your Step2Fragment
-                        Handler handler = new Handler(Looper.getMainLooper());
+                            // Iterate through each deletion status entry
+                            for (int i = 0; i < deletionStatusArray.length(); i++) {
+                                JSONObject deletionStatusEntry = deletionStatusArray.getJSONObject(i);
+                                String imageURL = deletionStatusEntry.getString("imageURL");
+                                String status = deletionStatusEntry.getString("status");
 
-                        // To run code on the UI thread, use the handler like this:
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(requireContext(), "Crime reported successfully", Toast.LENGTH_SHORT).show();
-                                summaryDialog.dismiss();
+                                // Log the deletion status for each image
+                                Log.d("MainActivity", "Image URL: " + imageURL + ", Status: " + status);
+
+                                // You can handle the status as needed (e.g., show a message to the user)
+                                if ("error".equals(status)) {
+                                    // Handle the error case for this image deletion
+                                    // For example, show a message to the user or take appropriate action
+                                }
                             }
-                        });
+                        }
+                        if (newUrls == null || newUrls.isEmpty()) {
+                            // Inside your EditReportStep2Fragment
+                            Handler handler = new Handler(Looper.getMainLooper());
+
+                            // To run code on the UI thread, use the handler like this:
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(requireContext(), "Report edited successfully", Toast.LENGTH_SHORT).show();
+                                    // Exit the fragment here since newUrls is null or empty
+                                    clearForm();
+                                }
+                            });
+                        } else {
+                            // Inside your sendReport method
+                            uploadImagesToServer(newUrls, report_id);
+                        }
+
                     } else {
                         // Display an error message
                         handler.post(new Runnable() {
@@ -587,6 +617,7 @@ public class Step3Fragment extends Fragment {
 
     private void clearForm() {
         requireActivity().finish();
+        summaryDialog.dismiss();
         Log.d("MainActivity", "clearForm - Form Cleared");
     }
 
@@ -594,89 +625,6 @@ public class Step3Fragment extends Fragment {
         Animator animator = AnimatorInflater.loadAnimator(requireContext(), animationResId);
         animator.setTarget(view);
         animator.start();
-    }
-
-    private class RetrieveUserDetailsTask extends AsyncTask<String, Void, UserData> {
-
-        @Override
-        protected UserData doInBackground(String... params) {
-            String serverUrl = params[0];
-            String userId = params[1];
-
-            try {
-                URL url = new URL(serverUrl + "?userId=" + userId);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-
-                // Read the response from the server
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    InputStream inputStream = connection.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-
-                    // Log the server response for debugging
-                    Log.d("Step3Fragment", "Server Response: " + response.toString());
-
-                    // Parse the JSON response and create a UserDetails object
-                    JSONObject jsonObject = new JSONObject(response.toString());
-                    String firstName = jsonObject.getString("firstName");
-                    String lastName = jsonObject.getString("lastName");
-                    String email = jsonObject.getString("email");
-                    String phone = jsonObject.getString("phone");
-                    String gender = jsonObject.getString("gender");
-
-                    userData.setUserFirstName(firstName);
-                    userData.setUserLastName(lastName);
-                    userData.setUserSex(gender);
-                    userData.setUserPhone(phone);
-                    userData.setUserEmail(email);
-                }
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(UserData result) {
-            if (userData != null) {
-                // Set the user details in the EditText fields
-                firstNameEditText.setText(userData.getUserFirstName());
-                lastNameEditText.setText(userData.getUserLastName());
-                emailEditText.setText(userData.getUserEmail());
-                phoneEditText.setText(userData.getUserPhone());
-
-                // Set the gender button based on the fetched gender
-                String gender = userData.getUserSex();
-                if ("Male".equalsIgnoreCase(gender)) {
-                    // Set Male button as selected
-                    maleButton.setBackgroundResource(R.drawable.yes_toggle_background);
-                    maleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-
-                    // Reset Female button
-                    femaleButton.setBackgroundResource(R.drawable.button_selector);
-                    femaleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-                } else if ("Female".equalsIgnoreCase(gender)) {
-                    // Set Female button as selected
-                    femaleButton.setBackgroundResource(R.drawable.yes_toggle_background);
-                    femaleButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-
-                    // Reset Male button
-                    maleButton.setBackgroundResource(R.drawable.button_selector);
-                    maleButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary));
-                }
-            } else {
-                Log.e("Step3Fragment", "RetrieveUserDetailsTask - userData is null");
-            }
-        }
-
-
     }
 
 }

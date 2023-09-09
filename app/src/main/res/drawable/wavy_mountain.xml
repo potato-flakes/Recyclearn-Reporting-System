@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="100dp"
+    android:viewportWidth="200"
+    android:viewportHeight="100">
+
+    <path
+        android:pathData="M-10,40 Q10,20 30,40 T70,40 T110,40 T150,40 T190,40 V100 H-10z"
+        android:fillColor="#4CAF50" /> <!-- Customize the color and shape of the waves -->
+</vector>

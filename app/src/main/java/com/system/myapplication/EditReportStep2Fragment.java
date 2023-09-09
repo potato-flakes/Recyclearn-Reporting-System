@@ -23,7 +23,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.Manifest;
@@ -90,6 +89,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -106,7 +106,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import pl.droidsonroids.gif.GifImageView;
 
 
-public class Step2Fragment extends Fragment implements LocationSelectionListener {
+public class EditReportStep2Fragment extends Fragment implements LocationSelectionListener {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
     private String formattedDate;
@@ -114,7 +114,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private List<String> imageUrls = new ArrayList<>();
     private static final int RESULT_OK = Activity.RESULT_OK;
     private static final int PICK_IMAGES_REQUEST_CODE = 1;
-    private static final String API_URL = "http://192.168.158.229/recyclearn/report_user/report.php";
+    private static final String API_URL = "http://192.168.1.6/recyclearn/report_user/report.php";
     private TextInputLayout textInputLayoutPersonName;
     private TextInputLayout barangayTextInputLayout;
     private LinearLayout imageContainer;
@@ -158,7 +158,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private EditText minuteEditText;
     private EditText enterPersonEditTexts;
     private boolean isLocationSet;
-    private boolean isAffectedByOtherFunction;
     private Marker userMarker;
     private Switch setLocationButton;
     private ProgressBar progressBar;
@@ -168,7 +167,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private LinearLayout animatedLayout;
     private RelativeLayout buttonLayout;
     private Handler handler = new Handler();
-
+    private boolean isAffectedByOtherFunction;
     int hourOfDay;
     int prmyClr;
     double phLatitude = 12.8797;
@@ -197,14 +196,20 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         }
     };
+    ArrayList<String> existingImageUrls = new ArrayList<>();
+    List<String> deletedImageUrls = new ArrayList<>();
+    ArrayList<String> newImageUrls = new ArrayList<>();
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_step2, container, false);
+        View view = inflater.inflate(R.layout.fragment_edit_report_step2, container, false);
 
-        Log.e("Step1Fragment", "You are in Step2Fragment");
+        Log.e("EditReportStep2Fragment", "You are in EditReportStep2Fragment");
+
+        existingImageUrls = userData.getExistingImageUrls();
 
         descriptionEditText = view.findViewById(R.id.descriptionEditText);
         textViewValue = view.findViewById(R.id.textViewValue);
@@ -250,6 +255,22 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         typeOfCrimeLayout = view.findViewById(R.id.typeOfCrimeLayout);
         autoGenerateProgressBar = view.findViewById(R.id.autoGenerateProgressBar);
 
+        List<String> selectedImageUrls = userData.getSelectedImageUrls();
+        ArrayList<String> parsedImageUrls = new ArrayList<>();
+
+        String serverPrefix = "http://192.168.158.229/recyclearn/report_user/images/";
+
+        for (String imageUrl : selectedImageUrls) {
+            // Check if the imageUrl starts with the serverPrefix
+            if (imageUrl.startsWith(serverPrefix)) {
+                // Remove the server prefix and add the parsed URL to the new list
+                parsedImageUrls.add(imageUrl.substring(serverPrefix.length()));
+            } else {
+                // If it doesn't start with the prefix, add the original URL to the new list
+                parsedImageUrls.add(imageUrl);
+            }
+        }
+        Log.d("MainActivity", "Parsed Images: " + parsedImageUrls);
 
         typeOfCrimeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -506,6 +527,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
+
         imageUrls = new ArrayList<>();
         loadUserData();
         loadUserLocation();
@@ -565,7 +587,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
         barangaySpinner.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)  {
+            public void onClick(View v) {
                 showBottomSheetDialog();
             }
         });
@@ -594,6 +616,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
         });
 
+
         viewMaps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -618,12 +641,12 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
         });
 
         nextButton.setOnClickListener(new View.OnClickListener() {
-            // Inside the onClick() method of the "Next" button in Step2Fragment
+            // Inside the onClick() method of the "Next" button in EditReportStep2Fragment
             @Override
             public void onClick(View v) {
                 saveUserData();
-                // Navigate to the next fragment (EditReportStep3Fragment)
-                ((createReport_activity) requireActivity()).navigateToNextFragment(new Step3Fragment());
+                // Navigate to the next fragment (Step3Fragment)
+                ((editReport_activity) requireActivity()).navigateToNextFragment(new EditReportStep3Fragment());
             }
 
         });
@@ -676,14 +699,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 }
             }
         });
-
-        descriptionEditText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
 
         return view;
     }
@@ -1023,7 +1038,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
 
             int crimeHour = userData.getCrimeHour();
-            Log.d("MainActivity", "Current Hour is: " + crimeHour);
+            Log.d("EditReportStep2Fragment", "loadUserData- Current Hour is: " + crimeHour);
             if (crimeHour >= 0) {
                 // Time is set, you can use the `crimeHour` value here
                 int storedCrimeHour = crimeHour; // Get the hour part
@@ -1042,8 +1057,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 // Set the current time to the EditText fields
                 hourEditText.setText(String.valueOf(hour12Format));
 
-                Log.d("MainActivity", "Today Button was clicked");
-                Log.d("MainActivity", "Current Hour is: " + hourEditText.getText().toString());
+                Log.d("EditReportStep2Fragment", "loadUserData- Today Button was clicked");
+                Log.d("EditReportStep2Fragment", "loadUserData- Current Hour is: " + hourEditText.getText().toString());
 
                 // Set the AM/PM states based on the current hour
                 if (hourOfDay >= 12) {
@@ -1092,18 +1107,18 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             Double storedLatitude = userData.getCrimeLatitude();
             Double storedLongitude = userData.getCrimeLongitude();
             if (storedLatitude != 0.0 && storedLongitude != 0.0) {
-                Log.e("Step1Fragment", "onCreateView - if method was launched!");
+                Log.e("EditReportStep2Fragment", "onCreateView - if method was launched!");
                 setLatitude = storedLatitude;
                 setLongitude = storedLongitude;
                 latitude = storedLatitude;
                 longitude = storedLongitude;
                 zoomLevel = 18.0;
 
-                Log.e("Step1Fragment", "onCreateView - storedLatitude value: " + storedLatitude);
-                Log.e("Step1Fragment", "onCreateView - storedLongitude value: " + storedLongitude);
+                Log.e("EditReportStep2Fragment", "onCreateView - storedLatitude value: " + storedLatitude);
+                Log.e("EditReportStep2Fragment", "onCreateView - storedLongitude value: " + storedLongitude);
             } else {
                 // Set default latitude and longitude (e.g., Philippines coordinates)
-                Log.e("Step1Fragment", "onCreateView - else method was launched, you failed");
+                Log.e("EditReportStep2Fragment", "onCreateView - else method was launched, you failed");
                 setLatitude = phLatitude;
                 setLongitude = phLongitude;
                 zoomLevel = 2.5;
@@ -1120,25 +1135,25 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             }
 
             String storeImages = userData.getSelectedImageUrls().toString();
-            if (storeImages != null) {
+            if (storeImages != null){
                 displayImages();
             }
 
         } else {
-            Log.e("Step1Fragment", "onCreateView - userData is null");
+            Log.e("EditReportStep2Fragment", "loadUserData - userData is null");
         }
     }
 
     //START OF LOCATION METHODS
     private void setLocation() {
-        Log.d("MainActivity", "setLocation - Set Location Button was clicked");
+        Log.d("EditReportStep2Fragment", "setLocation - Set Location Button was clicked");
         // Show the loading GIF
         loadingImageView.setVisibility(View.VISIBLE);
 
         removeUserMarker();
 
         if (!setLocationButton.isChecked()) {
-            Log.e("MainActivity", "Switch button was turned off");
+            Log.e("EditReportStep2Fragment", "setLocation - Switch button was turned off");
             // If the switch is turned off, reset the location flag and return
             isLocationSet = false;
             // Hide the loading GIF
@@ -1194,7 +1209,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                 locationTextView.setText(address.getAddressLine(0));
                 userData.setCrimeExactLocation(locationTextView.getText().toString());
 
-                new Step2Fragment.ConvertCoordinatesTask().execute(passLatitude, passLongitude);
+                new EditReportStep2Fragment.ConvertCoordinatesTask().execute(passLatitude, passLongitude);
 
                 latitude = passLatitude;
                 longitude = passLongitude;
@@ -1227,7 +1242,6 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             e.printStackTrace();
         }
     }
-
     private class ConvertCoordinatesTask extends AsyncTask<Double, Void, String> {
         private final double LATITUDE_ADJUSTMENT = 0.0001;
         private final double LONGITUDE_ADJUSTMENT = 0.0001;
@@ -1389,16 +1403,16 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
             // Animate to the user's location with zoom
             mapView.getController().animateTo(userLocation, zoomLevel, null);
 
-            Log.e("Step1Fragment", "onCreateView - stored Latitude value: " + setLatitude);
-            Log.e("Step1Fragment", "onCreateView - stored Longitude value: " + setLongitude);
+            Log.e("EditReportStep2Fragment", "loadUserLocation - stored Latitude value: " + setLatitude);
+            Log.e("EditReportStep2Fragment", "loadUserLocation - stored Longitude value: " + setLongitude);
         } else {
             // Create and add the marker to the map
             GeoPoint userLocation = new GeoPoint(setLatitude, setLongitude);
             // Animate to the user's location with zoom
             mapView.getController().animateTo(userLocation, zoomLevel, null);
 
-            Log.e("Step1Fragment", "onCreateView - userLocation Latitude value: " + setLatitude);
-            Log.e("Step1Fragment", "onCreateView - userLocation Longitude value: " + setLongitude);
+            Log.e("EditReportStep2Fragment", "loadUserLocation - userLocation Latitude value: " + setLatitude);
+            Log.e("EditReportStep2Fragment", "loadUserLocation - userLocation Longitude value: " + setLongitude);
 
         }
     }
@@ -1800,6 +1814,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     @Override
     public void onResume() {
         super.onResume();
+        // Update the button UI based on the stored value in UserData
         updateButtonUI();
     }
 
@@ -1814,7 +1829,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
     private boolean uploadImagesToServer(final List<String> imageUrls, final String reportId) {
         Log.d("MainActivity", "uploadImagesToServer - has started");
         RequestQueue queue = Volley.newRequestQueue(requireContext());
-        String url = "http://192.168.158.229/recyclearn/report_user/upload.php";
+        String url = "http://192.168.1.6/recyclearn/report_user/upload.php";
         boolean success = true;
         final AtomicInteger uploadCounter = new AtomicInteger(0);
         for (final String imageUrl : imageUrls) {
@@ -1879,11 +1894,13 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
     private void displayImages() {
         Log.d("MainActivity", "displayImages - has started");
+        Log.e("EditReportStep2Fragment", "displayImages - Images from the Database: " + userData.getSelectedImageUrls());
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 // Clear the imageContainer before adding the new images
                 imageContainer.removeAllViews();
+                ArrayList<String> newImageUrls = new ArrayList<>(); // Create a list for new image URLs
 
                 for (final String imageUrl : userData.getSelectedImageUrls()) {
                     // Create a new FrameLayout to hold the ImageView and delete button
@@ -1908,9 +1925,8 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                     );
                     imageView.setLayoutParams(imageParams);
 
-// Set ScaleType to FIT_XY
+                    // Set ScaleType to FIT_XY
                     imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-
 
                     // Load the image using your preferred library (e.g., Picasso, Glide, etc.)
                     // Example with Picasso:
@@ -1920,7 +1936,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                             .centerCrop()
                             .into(imageView);
 
-// Create a new ImageView for the delete button
+                    // Create a new ImageView for the delete button
                     ImageView deleteButton = new ImageView(requireActivity());
                     FrameLayout.LayoutParams deleteButtonParams = new FrameLayout.LayoutParams(
                             FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -1930,31 +1946,87 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                     deleteButton.setLayoutParams(deleteButtonParams);
                     deleteButton.setImageResource(R.drawable.ic_image_delete); // Set your delete icon drawable here
 
-                    final int imageIndex = userData.getSelectedImageUrls().indexOf(imageUrl); // Get the index of the image to delete
+                    final int imageIndex = userData.getSelectedImageUrls().indexOf(imageUrl); // Get the index of the selected image to delete
 
-// Set a click listener for the delete button
+                    Log.e("EditREportStep2Fragment", "displayImages- Image to delete: " + imageIndex);
+                    Log.e("EditREportStep2Fragment", "displayImages- Images on SelectedImageUrls: " + userData.getSelectedImageUrls());
+                    // Set a click listener for the delete button
                     deleteButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            // Log the image URL you want to delete
+                            Log.d("EditREportStep2Fragment", "displayImages - Image URL to delete: " + imageUrl);
+
                             // Check if the image index is valid
-                            if (imageIndex >= 0 && imageIndex < userData.getSelectedImageUrls().size()) {
-                                // Remove the image URL from the list using the index
-                                userData.getSelectedImageUrls().remove(imageIndex);
-                                // Redisplay the updated images
-                                displayImages();
+                            if (imageIndex >= 0) {
+                                // Check if the image URL is an HTTP URL
+                                if (imageUrl.startsWith("http")) {
+                                    // This is an HTTP URL, handle it as you were doing before
+                                    handleHttpImageDeletion(imageUrl, imageIndex);
+                                } else if (imageUrl.startsWith("content")) {
+                                    // This is a content URI, handle it differently
+                                    // This is an HTTP URL, handle it as you were doing before
+                                    handleContentImageDeletion(imageIndex);
+                                } else {
+                                    // Handle other cases if needed
+                                    Log.e("EditREportStep2Fragment", "displayImages - Unknown image URL type");
+                                }
+                            } else {
+                                Log.e("EditREportStep2Fragment", "displayImages - Error: index does not match");
                             }
                         }
                     });
 
+
                     // Add the ImageView and delete button to the imageLayout
                     imageLayout.addView(imageView);
-// Add the ImageView (delete button) to the imageLayout
+                    // Add the ImageView (delete button) to the imageLayout
                     imageLayout.addView(deleteButton);
                     // Add the imageLayout to the imageContainer
                     imageContainer.addView(imageLayout);
+                    // Check if the imageUrl exists in existingImageUrls
+                    if (existingImageUrls.contains(imageUrl)) {
+                        // This is an existing image
+                    } else {
+                        // This is a new image
+                        newImageUrls.add(imageUrl);
+                    }
                 }
+
+                // Set the new image URLs after processing the images
+                userData.setNewImageUrls(newImageUrls);
+                Log.e("EditReportStep2Fragment", "displayImages - New Images00: " + userData.getNewImageUrls());
             }
         });
+    }
+
+    private void handleHttpImageDeletion(String imageUrl, int imageIndex) {
+        try {
+            URL url = new URL(imageUrl);
+            String path = url.getPath();
+            String filename = path.substring(path.lastIndexOf('/') + 1);
+
+            // Add the filename to the deletedImageUrls list
+            deletedImageUrls.add(filename);
+            userData.setDeletedImageUrls(deletedImageUrls);
+
+            // Remove the image URL from the list using the index
+            userData.getSelectedImageUrls().remove(imageIndex);
+
+            // Redisplay the updated images
+            displayImages();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            // Handle URL parsing error
+        }
+    }
+
+    private void handleContentImageDeletion(int imageIndex) {
+        // Remove the image URL from the list using the index
+        userData.getSelectedImageUrls().remove(imageIndex);
+
+        // Redisplay the updated images
+        displayImages();
     }
 
     private void openImagePicker() {
@@ -2044,7 +2116,7 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
                         // Upload the images to the server
                         boolean imageUploadSuccess = uploadImagesToServer(imageUrls, reportId);
 
-                        // Inside your Step2Fragment
+                        // Inside your EditReportStep2Fragment
                         Handler handler = new Handler(Looper.getMainLooper());
 
                         // To run code on the UI thread, use the handler like this:
@@ -2154,10 +2226,10 @@ public class Step2Fragment extends Fragment implements LocationSelectionListener
 
     }
 
-    // Method to navigate back to Step1Fragment
+    // Method to navigate back to EditReportStep1Fragment
     private void navigateToStep1Fragment() {
         saveUserData();
-        // Navigate to the previous fragment (Step1Fragment)
-        ((createReport_activity) requireActivity()).navigateToPreviousFragment(new Step1Fragment());
+        // Navigate to the previous fragment (EditReportStep1Fragment)
+        ((editReport_activity) requireActivity()).navigateToPreviousFragment(new EditReportStep1Fragment());
     }
 }
